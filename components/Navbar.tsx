@@ -1,9 +1,65 @@
 "use client";
 
+import { useEffect, useState } from "react";
 import Link from "next/link";
 import CartBadge from "./CartBadge";
+import { supabase } from "@/lib/supabase";
+
+type UserProfile = {
+  full_name: string | null;
+};
 
 export default function Navbar() {
+  const [user, setUser] = useState<any>(null);
+  const [profile, setProfile] = useState<UserProfile | null>(null);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    let mounted = true;
+
+    async function loadUser() {
+      const {
+        data: { user: currentUser },
+      } = await supabase.auth.getUser();
+
+      if (!mounted) return;
+
+      setUser(currentUser);
+
+      if (currentUser) {
+        const { data } = await supabase
+          .from("profiles")
+          .select("full_name")
+          .eq("id", currentUser.id)
+          .maybeSingle();
+
+        if (mounted) {
+          setProfile(data);
+        }
+      }
+
+      setLoading(false);
+    }
+
+    loadUser();
+
+    const {
+      data: { subscription },
+    } = supabase.auth.onAuthStateChange(() => {
+      loadUser();
+    });
+
+    return () => {
+      mounted = false;
+      subscription.unsubscribe();
+    };
+  }, []);
+
+  const displayName =
+    profile?.full_name?.trim() ||
+    user?.email?.split("@")[0] ||
+    "Akun Saya";
+
   return (
     <>
       <header className="relative z-50 border-b border-zinc-200 bg-white">
@@ -22,18 +78,21 @@ export default function Navbar() {
             >
               Produk
             </Link>
+
             <Link
               href="/#cara-kerja"
               className="text-sm font-semibold text-zinc-700 hover:text-orange-500"
             >
               Cara Kerja
             </Link>
+
             <Link
               href="/#tentang"
               className="text-sm font-semibold text-zinc-700 hover:text-orange-500"
             >
               Tentang
             </Link>
+
             <Link
               href="/tracking"
               className="text-sm font-bold text-zinc-900 hover:text-orange-500"
@@ -42,15 +101,26 @@ export default function Navbar() {
             </Link>
           </nav>
 
-          <div className="flex items-center gap-3">
+          <div className="flex items-center gap-2 sm:gap-3">
             <CartBadge />
 
-            <Link
-              href="/login"
-              className="hidden rounded-full bg-zinc-950 px-5 py-2.5 text-sm font-black text-white hover:bg-orange-500 sm:block"
-            >
-              Masuk
-            </Link>
+            {!loading && user ? (
+              <Link
+                href="/account"
+                className="flex max-w-[150px] items-center gap-2 rounded-full border border-zinc-200 bg-white px-4 py-2.5 text-sm font-black text-zinc-900 hover:border-orange-300 hover:text-orange-500"
+                title="Buka akun"
+              >
+                <span className="text-base">👤</span>
+                <span className="truncate">{displayName}</span>
+              </Link>
+            ) : (
+              <Link
+                href="/login"
+                className="rounded-full bg-zinc-950 px-5 py-2.5 text-sm font-black text-white hover:bg-orange-500"
+              >
+                Masuk
+              </Link>
+            )}
           </div>
         </div>
       </header>
