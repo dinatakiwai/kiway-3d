@@ -1,6 +1,21 @@
 "use client";
 
+import dynamic from "next/dynamic";
 import Link from "next/link";
+
+const ProductPreview3D = dynamic(
+  () => import("@/components/ProductPreview3D"),
+  {
+    ssr: false,
+    loading: () => (
+      <div className="flex h-64 items-center justify-center bg-zinc-100">
+        <span className="text-sm font-semibold text-zinc-400">
+          Menyiapkan 3D...
+        </span>
+      </div>
+    ),
+  }
+);
 
 const products = [
   {
@@ -47,6 +62,24 @@ const products = [
   },
 ];
 
+function ProductIcon({ name }: { name: string }) {
+  return (
+    <div className="text-center">
+      <div className="mb-3 text-6xl">
+        {name === "Custom Keycap"
+          ? "🔤"
+          : name === "Custom Name Tag"
+          ? "🏷️"
+          : name === "Custom Phone Case"
+          ? "📱"
+          : name === "Mini Figurine"
+          ? "🧸"
+          : "🖥️"}
+      </div>
+    </div>
+  );
+}
+
 export default function CatalogPage() {
   return (
     <main className="min-h-screen bg-zinc-50 px-6 py-12">
@@ -75,28 +108,20 @@ export default function CatalogPage() {
               className="group overflow-hidden rounded-3xl border border-zinc-200 bg-white shadow-sm transition hover:-translate-y-1 hover:shadow-xl"
             >
               {/* Preview */}
-              <div className="flex h-64 items-center justify-center bg-zinc-100">
-                <div className="text-center">
-                  <div className="mb-3 text-6xl">
-                    {product.name === "Custom Clicker"
-                      ? "⌨️"
-                      : product.name === "Custom Keycap"
-                      ? "🔤"
-                      : product.name === "Custom Name Tag"
-                      ? "🏷️"
-                      : product.name === "Custom Phone Case"
-                      ? "📱"
-                      : product.name === "Mini Figurine"
-                      ? "🧸"
-                      : "🖥️"}
+              <div className="relative flex h-64 items-center justify-center overflow-hidden bg-zinc-100">
+                {product.name === "Custom Clicker" ? (
+                  <div className="h-[300px] w-full">
+                    <ProductPreview3D />
                   </div>
+                ) : (
+                  <ProductIcon name={product.name} />
+                )}
 
-                  {!product.active && (
-                    <span className="rounded-full bg-zinc-900 px-3 py-1 text-xs font-medium text-white">
-                      COMING SOON
-                    </span>
-                  )}
-                </div>
+                {!product.active && (
+                  <span className="absolute bottom-4 left-1/2 -translate-x-1/2 rounded-full bg-zinc-900 px-3 py-1 text-xs font-medium text-white">
+                    COMING SOON
+                  </span>
+                )}
               </div>
 
               {/* Info */}
