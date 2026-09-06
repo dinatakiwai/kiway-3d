@@ -84,30 +84,25 @@ export default function CatalogPage() {
   return (
     <main className="min-h-screen bg-zinc-50 px-6 py-12">
       <div className="mx-auto max-w-6xl">
-        {/* Header */}
         <div className="mb-12 text-center">
           <p className="mb-3 text-sm font-semibold uppercase tracking-[0.25em] text-zinc-500">
             KIWAY 3D
           </p>
-
           <h1 className="text-4xl font-bold tracking-tight text-zinc-900 md:text-5xl">
             Our Catalog
           </h1>
-
           <p className="mx-auto mt-4 max-w-2xl text-zinc-500">
-            Temukan berbagai produk 3D print unik dari KIWAY.
-            Custom sesuai keinginanmu.
+            Temukan berbagai produk 3D print unik dari KIWAY. Custom sesuai
+            keinginanmu.
           </p>
         </div>
 
-        {/* Product Grid */}
         <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
           {products.map((product) => (
             <div
               key={product.name}
               className="group overflow-hidden rounded-3xl border border-zinc-200 bg-white shadow-sm transition hover:-translate-y-1 hover:shadow-xl"
             >
-              {/* Preview */}
               <div className="relative flex h-64 items-center justify-center overflow-hidden bg-zinc-100">
                 {product.name === "Custom Clicker" ? (
                   <div className="h-[300px] w-full">
@@ -124,16 +119,13 @@ export default function CatalogPage() {
                 )}
               </div>
 
-              {/* Info */}
               <div className="p-6">
                 <p className="text-xs font-semibold uppercase tracking-wider text-zinc-400">
                   {product.category}
                 </p>
-
                 <h2 className="mt-2 text-xl font-bold text-zinc-900">
                   {product.name}
                 </h2>
-
                 <p className="mt-2 min-h-[48px] text-sm leading-6 text-zinc-500">
                   {product.description}
                 </p>
@@ -145,10 +137,10 @@ export default function CatalogPage() {
 
                   {product.active ? (
                     <Link
-                      href="/customizer"
+                      href="/catalog/clicker"
                       className="rounded-xl bg-zinc-900 px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-zinc-700"
                     >
-                      Customize
+                      Lihat Produk
                     </Link>
                   ) : (
                     <button

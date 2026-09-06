@@ -6,26 +6,34 @@ const products = [
   {
     name: "Custom Clicker",
     description: "Clicker nama dengan warna sesuai pilihanmu.",
-    price: "Mulai Rp49.000",
+    price: "Mulai Rp54.000",
     icon: "🖱️",
+    active: true,
+    href: "/catalog/clicker",
   },
   {
     name: "Mini Keyboard",
     description: "Keyboard mini custom untuk meja kerja kamu.",
-    price: "Mulai Rp79.000",
+    price: "Coming Soon",
     icon: "⌨️",
+    active: false,
+    href: "/catalog",
   },
   {
     name: "Custom Keycap",
     description: "Keycap unik dengan nama dan warna pilihan.",
-    price: "Mulai Rp19.000",
+    price: "Coming Soon",
     icon: "🔤",
+    active: false,
+    href: "/catalog",
   },
   {
     name: "Name Keychain",
     description: "Gantungan nama 3D yang bisa kamu desain sendiri.",
-    price: "Mulai Rp15.000",
+    price: "Coming Soon",
     icon: "🔑",
+    active: false,
+    href: "/catalog",
   },
 ];
 
@@ -34,7 +42,10 @@ export default function Home() {
     <main className="min-h-screen bg-[#faf9f7] text-zinc-900">
       {/* HERO */}
       <section className="relative overflow-hidden">
-        <div className="mx-auto grid max-w-7xl items-center gap-12 px-6 py-20 md:grid-cols-2 md:py-28">
+        <div className="absolute -left-32 top-24 h-72 w-72 rounded-full bg-orange-200/30 blur-3xl" />
+        <div className="absolute -right-32 top-10 h-80 w-80 rounded-full bg-zinc-200/50 blur-3xl" />
+
+        <div className="relative mx-auto grid max-w-7xl items-center gap-12 px-6 py-20 md:grid-cols-2 md:py-28">
           <div>
             <div className="mb-6 inline-flex rounded-full border border-orange-200 bg-orange-50 px-4 py-2 text-sm font-medium text-orange-600">
               ✨ Custom 3D Printing
@@ -58,12 +69,20 @@ export default function Home() {
                 🎨 Mulai Custom
               </Link>
 
-              <Link
-                href="/catalog"
+              <a
+                href="#produk"
                 className="rounded-full border border-zinc-300 bg-white px-7 py-4 text-center font-bold transition hover:border-zinc-900"
               >
                 Lihat Produk
-              </Link>
+              </a>
+            </div>
+
+            <div className="mt-10 flex flex-wrap gap-5 text-xs font-semibold uppercase tracking-widest text-zinc-400">
+              <span>Made to Order</span>
+              <span>•</span>
+              <span>3D Printed</span>
+              <span>•</span>
+              <span>Custom</span>
             </div>
           </div>
 
@@ -71,7 +90,7 @@ export default function Home() {
           <div className="relative">
             <div className="absolute -inset-10 rounded-full bg-orange-200/40 blur-3xl" />
 
-            <div className="relative mx-auto max-w-lg rotate-2 rounded-[2rem] border border-zinc-200 bg-white p-5 shadow-2xl">
+            <div className="relative mx-auto max-w-lg rotate-2 rounded-[2rem] border border-zinc-200 bg-white p-5 shadow-2xl transition duration-500 hover:rotate-1 hover:-translate-y-1">
               <div className="rounded-[1.5rem] bg-zinc-100 p-8">
                 <div className="mb-8 flex items-center justify-between">
                   <span className="text-sm font-semibold text-zinc-500">
@@ -86,8 +105,8 @@ export default function Home() {
                 <div className="flex flex-wrap justify-center gap-3">
                   {["R", "A", "H", "M", "A"].map((letter, index) => (
                     <div
-                      key={index}
-                      className={`flex h-20 w-20 items-center justify-center rounded-2xl border-b-4 text-3xl font-black shadow-lg ${
+                      key={`${letter}-${index}`}
+                      className={`flex h-16 w-16 items-center justify-center rounded-2xl border-b-4 text-2xl font-black shadow-lg transition hover:-translate-y-1 md:h-20 md:w-20 md:text-3xl ${
                         index % 3 === 0
                           ? "border-red-700 bg-red-500 text-white"
                           : index % 3 === 1
@@ -133,12 +152,18 @@ export default function Home() {
           <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-4">
             {products.map((product) => (
               <Link
-                href="/customizer"
+                href={product.href}
                 key={product.name}
                 className="group rounded-3xl border border-zinc-200 bg-[#faf9f7] p-5 transition duration-300 hover:-translate-y-1 hover:border-orange-300 hover:shadow-xl"
               >
-                <div className="flex aspect-square items-center justify-center rounded-2xl bg-zinc-100 text-7xl transition group-hover:scale-[1.02]">
+                <div className="relative flex aspect-square items-center justify-center rounded-2xl bg-zinc-100 text-7xl transition group-hover:scale-[1.02]">
                   {product.icon}
+
+                  {!product.active && (
+                    <span className="absolute bottom-4 rounded-full bg-zinc-900 px-3 py-1 text-[10px] font-bold tracking-wider text-white">
+                      COMING SOON
+                    </span>
+                  )}
                 </div>
 
                 <h3 className="mt-5 text-xl font-black">
@@ -179,13 +204,25 @@ export default function Home() {
 
           <div className="mt-12 grid gap-5 md:grid-cols-3">
             {[
-              ["01", "Pilih Produk", "Pilih clicker, keyboard, keycap, atau produk lainnya."],
-              ["02", "Custom", "Pilih nama, warna, dan kombinasi desain yang kamu inginkan."],
-              ["03", "Kami Print", "Desainmu diproses dan dicetak menggunakan 3D printer."],
+              [
+                "01",
+                "Pilih Produk",
+                "Pilih clicker, keyboard, keycap, atau produk lainnya.",
+              ],
+              [
+                "02",
+                "Custom",
+                "Pilih nama, warna, dan kombinasi desain yang kamu inginkan.",
+              ],
+              [
+                "03",
+                "Kami Print",
+                "Desainmu diproses dan dicetak menggunakan 3D printer.",
+              ],
             ].map(([number, title, description]) => (
               <div
                 key={number}
-                className="rounded-3xl border border-white/10 bg-white/5 p-7"
+                className="rounded-3xl border border-white/10 bg-white/5 p-7 transition hover:-translate-y-1 hover:bg-white/[0.08]"
               >
                 <div className="text-5xl font-black text-orange-400">
                   {number}
@@ -202,10 +239,14 @@ export default function Home() {
         </div>
       </section>
 
-      {/* CTA */}
+      {/* ABOUT / CTA */}
       <section id="tentang" className="bg-orange-500">
         <div className="mx-auto max-w-7xl px-6 py-20 text-center">
-          <h2 className="text-4xl font-black tracking-tight text-white md:text-6xl">
+          <p className="font-bold uppercase tracking-widest text-orange-100">
+            KIWAY 3D
+          </p>
+
+          <h2 className="mt-3 text-4xl font-black tracking-tight text-white md:text-6xl">
             Siap bikin versi kamu?
           </h2>
 
