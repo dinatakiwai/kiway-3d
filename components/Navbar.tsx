@@ -4,9 +4,11 @@ import { useEffect, useState } from "react";
 import Link from "next/link";
 import CartBadge from "./CartBadge";
 import { supabase } from "@/lib/supabase";
+import { STORE } from "@/lib/store";
 
 type UserProfile = {
   full_name: string | null;
+  role: "admin" | "employee" | "customer";
 };
 
 export default function Navbar() {
@@ -29,13 +31,15 @@ export default function Navbar() {
       if (currentUser) {
         const { data } = await supabase
           .from("profiles")
-          .select("full_name")
+          .select("full_name, role")
           .eq("id", currentUser.id)
           .maybeSingle();
 
         if (mounted) {
-          setProfile(data);
+          setProfile(data as UserProfile | null);
         }
+      } else {
+        setProfile(null);
       }
 
       setLoading(false);
@@ -59,6 +63,22 @@ export default function Navbar() {
     profile?.full_name?.trim() ||
     user?.email?.split("@")[0] ||
     "Akun Saya";
+
+  const accountHref =
+    profile?.role === "admin" || profile?.role === "employee"
+      ? "/admin"
+      : "/account";
+
+  const accountLabel =
+    profile?.role === "admin"
+      ? "admin"
+      : profile?.role === "employee"
+        ? "employee"
+        : displayName;
+
+  const whatsappUrl = `https://wa.me/${STORE.whatsapp}?text=${encodeURIComponent(
+    "Halo KIWAY 👋 Saya ingin bertanya tentang produk dan custom 3D."
+  )}`;
 
   return (
     <>
@@ -106,12 +126,20 @@ export default function Navbar() {
 
             {!loading && user ? (
               <Link
-                href="/account"
+                href={accountHref}
                 className="flex max-w-[150px] items-center gap-2 rounded-full border border-zinc-200 bg-white px-4 py-2.5 text-sm font-black text-zinc-900 hover:border-orange-300 hover:text-orange-500"
-                title="Buka akun"
+                title={
+                  profile?.role === "admin" || profile?.role === "employee"
+                    ? "Buka dashboard"
+                    : "Buka akun"
+                }
               >
-                <span className="text-base">👤</span>
-                <span className="truncate">{displayName}</span>
+                <span className="text-base">
+                  {profile?.role === "admin" || profile?.role === "employee"
+                    ? "🛠️"
+                    : "👤"}
+                </span>
+                <span className="truncate">{accountLabel}</span>
               </Link>
             ) : (
               <Link
@@ -126,10 +154,11 @@ export default function Navbar() {
       </header>
 
       <a
-        href="https://wa.me/628XXXXXXXXXX"
+        href={whatsappUrl}
         target="_blank"
         rel="noreferrer"
         aria-label="WhatsApp KIWAY"
+        title="Chat WhatsApp KIWAY"
         className="fixed bottom-6 right-6 z-[60] flex h-14 w-14 items-center justify-center rounded-full bg-green-500 text-white shadow-lg transition hover:scale-105"
       >
         <svg

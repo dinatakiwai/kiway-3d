@@ -8,7 +8,7 @@ import { supabase } from "@/lib/supabase";
 type Profile = {
   full_name: string | null;
   phone: string | null;
-  role: string;
+  role: "admin" | "employee" | "customer";
 };
 
 type CustomerOrder = {
@@ -16,14 +16,17 @@ type CustomerOrder = {
   order_code: string | null;
   product: string | null;
   custom_name: string | null;
+  letters: unknown;
+  base_color: string | null;
   quantity: number;
+  price: number;
   total: number;
   payment_status: string | null;
   production_status: string | null;
   created_at: string;
 };
 
-function rupiah(value: number) {
+function formatRupiah(value: number) {
   return new Intl.NumberFormat("id-ID", {
     style: "currency",
     currency: "IDR",
@@ -31,7 +34,7 @@ function rupiah(value: number) {
   }).format(value);
 }
 
-function dateFormat(value: string) {
+function formatDate(value: string) {
   return new Intl.DateTimeFormat("id-ID", {
     day: "2-digit",
     month: "short",
@@ -41,6 +44,12 @@ function dateFormat(value: string) {
   }).format(new Date(value));
 }
 
+function paymentLabel(status: string | null) {
+  if (status === "paid") return "Sudah Dibayar";
+  if (status === "refunded") return "Refund";
+  return "Menunggu Pembayaran";
+}
+
 function productionLabel(status: string | null) {
   if (status === "processing") return "Sedang Diproses";
   if (status === "finished") return "Selesai";
@@ -48,23 +57,20 @@ function productionLabel(status: string | null) {
   return "Pesanan Baru";
 }
 
-function paymentLabel(status: string | null) {
-  if (status === "paid") return "Sudah Dibayar";
-  if (status === "refunded") return "Refund";
-  return "Menunggu Pembayaran";
-}
+function statusClass(status: string | null) {
+  if (status === "finished" || status === "shipped" || status === "paid") {
+    return "bg-green-50 text-green-700 border-green-200";
+  }
 
-function badgeClass(status: string | null) {
-  if (status === "paid" || status === "finished" || status === "shipped") {
-    return "border-green-200 bg-green-50 text-green-700";
-  }
   if (status === "processing") {
-    return "border-blue-200 bg-blue-50 text-blue-700";
+    return "bg-blue-50 text-blue-700 border-blue-200";
   }
+
   if (status === "refunded") {
-    return "border-red-200 bg-red-50 text-red-700";
+    return "bg-red-50 text-red-700 border-red-200";
   }
-  return "border-orange-200 bg-orange-50 text-orange-700";
+
+  return "bg-orange-50 text-orange-700 border-orange-200";
 }
 
 export default function AccountPage() {
@@ -73,13 +79,16 @@ export default function AccountPage() {
   const [profile, setProfile] = useState<Profile | null>(null);
   const [orders, setOrders] = useState<CustomerOrder[]>([]);
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState("");
   const [loggingOut, setLoggingOut] = useState(false);
+  const [error, setError] = useState("");
 
   useEffect(() => {
-    let active = true;
+    let mounted = true;
 
     async function loadAccount() {
+      setLoading(true);
+      setError("");
+
       const {
         data: { user },
       } = await supabase.auth.getUser();
@@ -89,56 +98,68 @@ export default function AccountPage() {
         return;
       }
 
-      const [profileResult, ordersResult] = await Promise.all([
-        supabase
-          .from("profiles")
-          .select("full_name, phone, role")
-          .eq("id", user.id)
-          .maybeSingle(),
+      const { data: profileData, error: profileError } = await supabase
+        .from("profiles")
+        .select("full_name, phone, role")
+        .eq("id", user.id)
+        .maybeSingle();
 
-        supabase.rpc("get_customer_orders"),
-      ]);
+      if (!mounted) return;
 
-      if (!active) return;
-
-      if (profileResult.error) {
+      if (profileError) {
         setError("Profil akun belum dapat dimuat.");
         setLoading(false);
         return;
       }
 
-      if (ordersResult.error) {
+      // ADMIN & EMPLOYEE bukan customer.
+      // Kalau mereka masuk ke /account secara manual, kembalikan ke admin.
+      if (profileData?.role === "admin" || profileData?.role === "employee") {
+        router.replace("/admin");
+        return;
+      }
+
+      const { data: orderData, error: orderError } =
+        await supabase.rpc("get_customer_orders");
+
+      if (!mounted) return;
+
+      if (orderError) {
         setError("Riwayat pesanan belum dapat dimuat.");
         setLoading(false);
         return;
       }
 
-      setProfile(profileResult.data);
-      setOrders((ordersResult.data || []) as CustomerOrder[]);
+      setProfile(profileData as Profile | null);
+      setOrders((orderData || []) as CustomerOrder[]);
       setLoading(false);
     }
 
     loadAccount();
 
     return () => {
-      active = false;
+      mounted = false;
     };
   }, [router]);
 
-  async function logout() {
+  async function handleLogout() {
     setLoggingOut(true);
+
     await supabase.auth.signOut();
+
     router.replace("/login");
     router.refresh();
   }
 
   if (loading) {
     return (
-      <main className="min-h-screen bg-[#faf9f7] px-5 py-12">
-        <div className="mx-auto max-w-5xl animate-pulse">
-          <div className="h-44 rounded-[2rem] bg-zinc-200" />
-          <div className="mt-6 h-24 rounded-[2rem] bg-zinc-200" />
-          <div className="mt-6 h-64 rounded-[2rem] bg-zinc-200" />
+      <main className="min-h-screen bg-[#faf9f7] px-5 py-12 text-zinc-900">
+        <div className="mx-auto max-w-5xl">
+          <div className="animate-pulse">
+            <div className="mx-auto h-8 w-28 rounded bg-zinc-200" />
+            <div className="mt-8 h-40 rounded-[2rem] bg-zinc-200" />
+            <div className="mt-6 h-56 rounded-[2rem] bg-zinc-200" />
+          </div>
         </div>
       </main>
     );
@@ -151,9 +172,32 @@ export default function AccountPage() {
   );
 
   return (
-    <main className="min-h-screen bg-[#faf9f7] px-5 py-10 text-zinc-900">
+    <main className="min-h-screen bg-[#faf9f7] px-5 py-8 text-zinc-900">
       <div className="mx-auto max-w-5xl">
-        <section className="rounded-[2rem] bg-zinc-950 p-7 text-white md:p-9">
+        <header className="flex items-center justify-between gap-4">
+          <Link href="/" className="text-3xl font-black tracking-tight">
+            KIWAY<span className="text-orange-500">.</span>
+          </Link>
+
+          <div className="flex items-center gap-3">
+            <Link
+              href="/catalog"
+              className="hidden rounded-full border border-zinc-200 bg-white px-4 py-2 text-sm font-bold hover:border-orange-300 sm:block"
+            >
+              Belanja
+            </Link>
+
+            <button
+              onClick={handleLogout}
+              disabled={loggingOut}
+              className="rounded-full bg-zinc-950 px-4 py-2 text-sm font-bold text-white hover:bg-orange-500 disabled:opacity-50"
+            >
+              {loggingOut ? "Keluar..." : "Logout"}
+            </button>
+          </div>
+        </header>
+
+        <section className="mt-8 rounded-[2rem] bg-zinc-950 p-7 text-white md:p-9">
           <p className="text-xs font-black uppercase tracking-[0.25em] text-orange-400">
             KIWAY ACCOUNT
           </p>
@@ -163,26 +207,17 @@ export default function AccountPage() {
               <h1 className="text-3xl font-black tracking-tight md:text-4xl">
                 Halo, {name} 👋
               </h1>
-              <p className="mt-2 text-sm leading-6 text-zinc-300">
-                Kelola akun dan lihat perkembangan pesanan KIWAY kamu.
+              <p className="mt-2 max-w-xl text-sm leading-6 text-zinc-300">
+                Kelola akun dan lihat perkembangan pesanan KIWAY kamu di sini.
               </p>
             </div>
 
-            <div className="flex flex-wrap gap-2">
-              <Link
-                href="/catalog"
-                className="rounded-full border border-white/20 px-5 py-3 text-sm font-black hover:bg-white/10"
-              >
-                Belanja
-              </Link>
-              <button
-                onClick={logout}
-                disabled={loggingOut}
-                className="rounded-full bg-orange-500 px-5 py-3 text-sm font-black text-white hover:bg-orange-400 disabled:opacity-50"
-              >
-                {loggingOut ? "Keluar..." : "Logout"}
-              </button>
-            </div>
+            <Link
+              href="/tracking"
+              className="w-fit rounded-full bg-orange-500 px-5 py-3 text-sm font-black text-white hover:bg-orange-400"
+            >
+              Lacak Pesanan
+            </Link>
           </div>
         </section>
 
@@ -204,27 +239,32 @@ export default function AccountPage() {
             <p className="text-xs font-bold uppercase tracking-wider text-zinc-400">
               Total Belanja
             </p>
-            <p className="mt-2 text-xl font-black">{rupiah(totalSpent)}</p>
+            <p className="mt-2 text-xl font-black">
+              {formatRupiah(totalSpent)}
+            </p>
           </div>
 
           <div className="rounded-3xl border border-zinc-200 bg-white p-6">
             <p className="text-xs font-bold uppercase tracking-wider text-zinc-400">
               WhatsApp
             </p>
-            <p className="mt-2 text-lg font-black">
+            <p className="mt-2 truncate text-lg font-black">
               {profile?.phone || "Belum diisi"}
             </p>
           </div>
         </section>
 
         <section className="mt-8">
-          <div className="flex items-end justify-between">
+          <div className="flex items-end justify-between gap-4">
             <div>
               <p className="text-xs font-black uppercase tracking-[0.2em] text-orange-500">
-                RIWAYAT
+                Riwayat
               </p>
-              <h2 className="mt-1 text-2xl font-black">Pesanan Saya</h2>
+              <h2 className="mt-1 text-2xl font-black tracking-tight">
+                Pesanan Saya
+              </h2>
             </div>
+
             <span className="text-sm font-semibold text-zinc-400">
               {orders.length} pesanan
             </span>
@@ -235,7 +275,8 @@ export default function AccountPage() {
               <div className="text-4xl">📦</div>
               <h3 className="mt-4 text-xl font-black">Belum ada pesanan</h3>
               <p className="mx-auto mt-2 max-w-md text-sm leading-6 text-zinc-500">
-                Buat custom clicker pertamamu dan pesananmu akan muncul di sini.
+                Yuk buat custom clicker pertamamu dan pesananmu akan muncul di
+                halaman ini.
               </p>
               <Link
                 href="/catalog/clicker"
@@ -251,14 +292,15 @@ export default function AccountPage() {
                   key={order.id}
                   className="rounded-[2rem] border border-zinc-200 bg-white p-5 shadow-sm md:p-6"
                 >
-                  <div className="flex flex-col justify-between gap-5 md:flex-row">
+                  <div className="flex flex-col justify-between gap-5 md:flex-row md:items-start">
                     <div>
-                      <div className="flex flex-wrap gap-2">
+                      <div className="flex flex-wrap items-center gap-2">
                         <span className="rounded-full bg-zinc-100 px-3 py-1 text-xs font-black">
                           {order.order_code || "Order KIWAY"}
                         </span>
+
                         <span
-                          className={`rounded-full border px-3 py-1 text-xs font-bold ${badgeClass(
+                          className={`rounded-full border px-3 py-1 text-xs font-bold ${statusClass(
                             order.production_status
                           )}`}
                         >
@@ -276,16 +318,17 @@ export default function AccountPage() {
                       </p>
 
                       <p className="mt-2 text-xs text-zinc-400">
-                        {dateFormat(order.created_at)}
+                        {formatDate(order.created_at)}
                       </p>
                     </div>
 
                     <div className="md:text-right">
                       <p className="text-xl font-black">
-                        {rupiah(Number(order.total || 0))}
+                        {formatRupiah(Number(order.total || 0))}
                       </p>
+
                       <span
-                        className={`mt-2 inline-block rounded-full border px-3 py-1 text-xs font-bold ${badgeClass(
+                        className={`mt-2 inline-block rounded-full border px-3 py-1 text-xs font-bold ${statusClass(
                           order.payment_status
                         )}`}
                       >
@@ -294,15 +337,19 @@ export default function AccountPage() {
                     </div>
                   </div>
 
-                  <div className="mt-5 border-t border-zinc-100 pt-4">
+                  <div className="mt-5 flex flex-wrap gap-2 border-t border-zinc-100 pt-4">
                     <Link
-                      href={`/tracking?code=${encodeURIComponent(
+                      href={`/tracking?order=${encodeURIComponent(
                         order.order_code || ""
                       )}`}
-                      className="inline-flex rounded-full border border-zinc-200 px-4 py-2 text-xs font-bold hover:border-orange-300 hover:text-orange-500"
+                      className="rounded-full border border-zinc-200 px-4 py-2 text-xs font-bold hover:border-orange-300 hover:text-orange-500"
                     >
-                      Lihat Tracking →
+                      Lihat Tracking
                     </Link>
+
+                    <span className="rounded-full bg-zinc-50 px-4 py-2 text-xs font-semibold text-zinc-500">
+                      {paymentLabel(order.payment_status)}
+                    </span>
                   </div>
                 </article>
               ))}
@@ -312,7 +359,7 @@ export default function AccountPage() {
 
         <section className="mt-8 rounded-[2rem] border border-zinc-200 bg-white p-6 md:p-7">
           <p className="text-xs font-black uppercase tracking-[0.2em] text-orange-500">
-            PROFIL
+            Profil
           </p>
 
           <div className="mt-4 grid gap-4 md:grid-cols-2">
@@ -320,6 +367,7 @@ export default function AccountPage() {
               <p className="text-xs font-bold text-zinc-400">Nama lengkap</p>
               <p className="mt-1 font-bold">{name}</p>
             </div>
+
             <div>
               <p className="text-xs font-bold text-zinc-400">WhatsApp</p>
               <p className="mt-1 font-bold">
