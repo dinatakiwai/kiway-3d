@@ -73,6 +73,10 @@ function statusClass(status: string | null) {
   return "bg-orange-50 text-orange-700 border-orange-200";
 }
 
+function isStaffRole(role: unknown) {
+  return role === "admin" || role === "employee";
+}
+
 export default function AccountPage() {
   const router = useRouter();
 
@@ -112,10 +116,33 @@ export default function AccountPage() {
         return;
       }
 
-      // ADMIN & EMPLOYEE bukan customer.
-      // Kalau mereka masuk ke /account secara manual, kembalikan ke admin.
-      if (profileData?.role === "admin" || profileData?.role === "employee") {
+      // Staff tidak boleh pernah dirender sebagai customer.
+      // Cek role dari profiles terlebih dahulu, lalu gunakan metadata auth
+      // sebagai fallback bila profil belum mengembalikan role.
+      const profileRole = profileData?.role;
+      const metadataRole =
+        user.user_metadata?.role ?? user.app_metadata?.role ?? null;
+
+      if (isStaffRole(profileRole) || isStaffRole(metadataRole)) {
+        setLoading(false);
+
+        // replace() adalah navigasi Next.js. location.replace() menjadi
+        // fallback keras agar halaman customer tidak tertinggal ketika
+        // browser masih memegang state halaman sebelumnya.
         router.replace("/admin");
+        if (typeof window !== "undefined") {
+          window.setTimeout(() => {
+            window.location.replace("/admin");
+          }, 100);
+        }
+        return;
+      }
+
+      // Fail closed: jangan pernah menganggap akun sebagai customer
+      // jika role belum berhasil diverifikasi.
+      if (!profileData || profileRole !== "customer") {
+        setError("Role akun belum dapat diverifikasi. Silakan login kembali.");
+        setLoading(false);
         return;
       }
 
