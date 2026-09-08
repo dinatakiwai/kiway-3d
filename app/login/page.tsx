@@ -8,7 +8,6 @@ import { supabase } from "@/lib/supabase";
 function LoginForm() {
   const router = useRouter();
   const searchParams = useSearchParams();
-
   const [email, setEmail] = useState(searchParams.get("email") || "");
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
@@ -18,10 +17,7 @@ function LoginForm() {
 
   useEffect(() => {
     const emailFromUrl = searchParams.get("email");
-
-    if (emailFromUrl) {
-      setEmail(emailFromUrl);
-    }
+    if (emailFromUrl) setEmail(emailFromUrl);
   }, [searchParams]);
 
   async function handleLogin(event: FormEvent) {
@@ -37,7 +33,6 @@ function LoginForm() {
 
     if (loginError) {
       setLoading(false);
-
       const message = loginError.message.toLowerCase();
 
       if (
@@ -55,7 +50,6 @@ function LoginForm() {
       } else {
         setError(loginError.message);
       }
-
       return;
     }
 
@@ -81,13 +75,18 @@ function LoginForm() {
     }
 
     if (profile?.role === "admin" || profile?.role === "employee") {
-      router.push("/admin");
-      router.refresh();
+      window.location.replace("/admin");
       return;
     }
 
-    router.push("/account");
-    router.refresh();
+    if (profile?.role === "customer") {
+      window.location.replace("/account");
+      return;
+    }
+
+    setError(
+      "Role akun belum dapat diverifikasi. Silakan login kembali atau hubungi admin."
+    );
   }
 
   return (
@@ -109,7 +108,6 @@ function LoginForm() {
             <h1 className="mt-3 text-3xl font-black tracking-tight">
               Selamat datang kembali
             </h1>
-
             <p className="mt-3 text-sm leading-6 text-zinc-500">
               Login untuk melihat pesanan dan mengakses akun KIWAY kamu.
             </p>
@@ -145,7 +143,6 @@ function LoginForm() {
                     Lupa password?
                   </Link>
                 </div>
-
                 <input
                   type="password"
                   value={password}
