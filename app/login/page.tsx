@@ -5,9 +5,69 @@ import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { supabase } from "@/lib/supabase";
 
+type UserRole = "admin" | "employee" | "customer";
+
+type ProfileRow = {
+  role: UserRole | null;
+};
+
+function isStaffRole(role: unknown) {
+  return role === "admin" || role === "employee";
+}
+
+function getMetadataRole(user: {
+  user_metadata?: Record<string, unknown> | null;
+  app_metadata?: Record<string, unknown> | null;
+}) {
+  const role =
+    user.user_metadata?.role ?? user.app_metadata?.role ?? null;
+
+  return role === "admin" || role === "employee" || role === "customer"
+    ? role
+    : null;
+}
+
+async function getDestination(userId: string, user: {
+  user_metadata?: Record<string, unknown> | null;
+  app_metadata?: Record<string, unknown> | null;
+}) {
+  const metadataRole = getMetadataRole(user);
+
+  // Staff metadata is checked first so an admin/employee session can never
+  // fall through to the customer page while the profile request is resolving.
+  if (isStaffRole(metadataRole)) {
+    return "/admin" as const;
+  }
+
+  const { data: profile, error } = await supabase
+    .from("profiles")
+    .select("role")
+    .eq("id", userId)
+    .maybeSingle<ProfileRow>();
+
+  if (error) {
+    throw error;
+  }
+
+  if (isStaffRole(profile?.role)) {
+    return "/admin" as const;
+  }
+
+  if (profile?.role === "customer") {
+    return "/account" as const;
+  }
+
+  if (metadataRole === "customer") {
+    return "/account" as const;
+  }
+
+  return null;
+}
+
 function LoginForm() {
   const router = useRouter();
   const searchParams = useSearchParams();
+
   const [email, setEmail] = useState(searchParams.get("email") || "");
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
@@ -20,19 +80,51 @@ function LoginForm() {
     if (emailFromUrl) setEmail(emailFromUrl);
   }, [searchParams]);
 
-  async function handleLogin(event: FormEvent) {
+  // Important: if an already-authenticated admin opens /login directly,
+  // resolve the role again instead of showing the customer flow.
+  useEffect(() => {
+    let mounted = true;
+
+    async function checkExistingSession() {
+      const {
+        data: { user },
+      } = await supabase.auth.getUser();
+
+      if (!mounted || !user) return;
+
+      try {
+        const destination = await getDestination(user.id, user);
+        if (!mounted || !destination) return;
+
+        window.location.replace(destination);
+      } catch {
+        // Do not redirect to customer when the role cannot be verified.
+      }
+    }
+
+    checkExistingSession();
+
+    return () => {
+      mounted = false;
+    };
+  }, []);
+
+  async function handleLogin(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     setError("");
     setLoading(true);
 
+    const cleanEmail = email.trim().toLowerCase();
+
     const { data, error: loginError } =
       await supabase.auth.signInWithPassword({
-        email: email.trim().toLowerCase(),
+        email: cleanEmail,
         password,
       });
 
     if (loginError) {
       setLoading(false);
+
       const message = loginError.message.toLowerCase();
 
       if (
@@ -50,43 +142,46 @@ function LoginForm() {
       } else {
         setError(loginError.message);
       }
+
       return;
     }
 
-    const userId = data.user?.id;
+    const user = data.user;
 
-    if (!userId) {
+    if (!user?.id) {
       setLoading(false);
       setError("Login berhasil, tetapi akun tidak ditemukan.");
       return;
     }
 
-    const { data: profile, error: profileError } = await supabase
-      .from("profiles")
-      .select("role")
-      .eq("id", userId)
-      .maybeSingle();
+    try {
+      const destination = await getDestination(user.id, user);
 
-    setLoading(false);
+      if (destination === "/admin") {
+        // Full navigation guarantees the new authenticated session is used.
+        window.location.replace("/admin");
+        return;
+      }
 
-    if (profileError) {
-      setError("Profil akun belum dapat dimuat. Coba lagi.");
-      return;
+      if (destination === "/account") {
+        window.location.replace("/account");
+        return;
+      }
+
+      // Never silently treat an unknown role as a customer.
+      await supabase.auth.signOut();
+      setLoading(false);
+      setError(
+        "Role akun belum dapat diverifikasi. Silakan hubungi admin sebelum melanjutkan."
+      );
+    } catch (profileError) {
+      console.error("KIWAY login role check failed:", profileError);
+      await supabase.auth.signOut();
+      setLoading(false);
+      setError(
+        "Profil akun belum dapat dimuat. Login dibatalkan agar akun tidak salah masuk ke halaman customer."
+      );
     }
-
-    if (profile?.role === "admin" || profile?.role === "employee") {
-      window.location.replace("/admin");
-      return;
-    }
-
-    if (profile?.role === "customer") {
-      window.location.replace("/account");
-      return;
-    }
-
-    setError(
-      "Role akun belum dapat diverifikasi. Silakan login kembali atau hubungi admin."
-    );
   }
 
   return (
