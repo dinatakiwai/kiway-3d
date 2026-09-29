@@ -83,7 +83,9 @@ export default function ProductDetailPage() {
     );
   }
 
-  const stock = Number(product.stock);
+  const currentProduct = product;
+
+  const stock = Number(currentProduct.stock);
   const outOfStock = stock <= 0;
   const maxQty = Math.max(1, stock);
 
@@ -94,14 +96,14 @@ export default function ProductDetailPage() {
 
     addToCart({
       product: "catalog",
-      productId: product.id,
-      name: product.title,
+      productId: currentProduct.id,
+      name: currentProduct.title,
       letters: [],
       baseColor: "",
       letterColors: {},
-      price: Number(product.price),
+      price: Number(currentProduct.price),
       quantity,
-      imageUrl: product.image_url,
+      imageUrl: currentProduct.image_url,
       // Sementara default paket katalog 500g.
       // Nanti bisa diganti per produk dari Admin Catalog.
       shippingWeightGram: 500,
@@ -118,9 +120,9 @@ export default function ProductDetailPage() {
   const whatsappText = `Halo ${STORE.name} 👋
 
 Saya ingin bertanya tentang produk:
-${product.title}
+${currentProduct.title}
 
-Harga: ${rupiah(Number(product.price))}
+Harga: ${rupiah(Number(currentProduct.price))}
 Stok: ${stock} pcs`;
 
   return (
@@ -133,8 +135,8 @@ Stok: ${stock} pcs`;
         <div className="mt-8 grid gap-10 md:grid-cols-2">
           <div className="overflow-hidden rounded-[2rem] border border-zinc-200 bg-white shadow-sm">
             <div className="aspect-square bg-zinc-100">
-              {product.image_url ? (
-                <img src={product.image_url} alt={product.title} className="h-full w-full object-cover" />
+              {currentProduct.image_url ? (
+                <img src={currentProduct.image_url} alt={currentProduct.title} className="h-full w-full object-cover" />
               ) : (
                 <div className="flex h-full items-center justify-center text-8xl">📦</div>
               )}
@@ -144,15 +146,15 @@ Stok: ${stock} pcs`;
           <div className="rounded-[2rem] border border-zinc-200 bg-white p-7 shadow-sm md:p-9">
             <div className="flex flex-wrap gap-2">
               <span className="rounded-full bg-orange-50 px-3 py-1.5 text-xs font-black text-orange-600">
-                {product.category}
+                {currentProduct.category}
               </span>
               <span className={`rounded-full px-3 py-1.5 text-xs font-black ${outOfStock ? "bg-red-50 text-red-600" : "bg-green-50 text-green-700"}`}>
                 {outOfStock ? "Stok Habis" : `Stok ${stock}`}
               </span>
             </div>
 
-            <h1 className="mt-5 text-4xl font-black tracking-tight md:text-5xl">{product.title}</h1>
-            <p className="mt-5 text-3xl font-black">{rupiah(Number(product.price))}</p>
+            <h1 className="mt-5 text-4xl font-black tracking-tight md:text-5xl">{currentProduct.title}</h1>
+            <p className="mt-5 text-3xl font-black">{rupiah(Number(currentProduct.price))}</p>
 
             <div className="my-8 h-px bg-zinc-200" />
 
@@ -160,7 +162,7 @@ Stok: ${stock} pcs`;
               Deskripsi Produk
             </h2>
             <p className="mt-3 whitespace-pre-line leading-7 text-zinc-600">
-              {product.description || "Produk 3D printing KEILAB."}
+              {currentProduct.description || "Produk 3D printing KEILAB."}
             </p>
 
             {!outOfStock && (
