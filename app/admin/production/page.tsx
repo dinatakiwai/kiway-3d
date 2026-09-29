@@ -623,7 +623,7 @@ export default function ProductionPage() {
 
     const message = `Halo ${order.customer_name || ""}, pesanan ${
       order.order_code || order.id
-    } dari KIWAY sedang ${statusLabel(order.production_status)}.`;
+    } dari KEILAB sedang ${statusLabel(order.production_status)}.`;
 
     window.open(
       `https://wa.me/${phone}?text=${encodeURIComponent(message)}`,
@@ -648,7 +648,7 @@ export default function ProductionPage() {
         <div className="flex flex-col gap-4 px-4 py-5 sm:px-6 lg:flex-row lg:items-center lg:justify-between lg:px-8">
           <div>
             <p className="text-xs font-bold uppercase tracking-[0.2em] text-orange-500">
-              KIWAY 3D
+              KEILAB.ID
             </p>
             <h1 className="mt-1 text-3xl font-black">Production Board</h1>
             <p className="mt-1 text-sm text-zinc-500">

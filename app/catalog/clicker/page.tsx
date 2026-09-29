@@ -89,7 +89,7 @@ export default function ClickerProductPage() {
             </Link>
 
             <p className="mt-4 text-center text-xs text-zinc-400">
-              Dibuat sesuai pesanan • 3D printed by KIWAY
+              Dibuat sesuai pesanan • 3D printed by KEILAB
             </p>
           </div>
         </section>

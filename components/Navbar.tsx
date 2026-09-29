@@ -77,7 +77,7 @@ export default function Navbar() {
         : displayName;
 
   const whatsappUrl = `https://wa.me/${STORE.whatsapp}?text=${encodeURIComponent(
-    "Halo KIWAY 👋 Saya ingin bertanya tentang produk dan custom 3D."
+    "Halo KEILAB 👋 Saya ingin bertanya tentang produk dan custom 3D."
   )}`;
 
   return (
@@ -86,9 +86,14 @@ export default function Navbar() {
         <div className="mx-auto flex h-16 max-w-7xl items-center justify-between px-5">
           <Link
             href="/"
-            className="text-2xl font-black tracking-tight text-zinc-950"
+            aria-label="KEILAB.ID"
+            className="flex h-10 w-[148px] items-center"
           >
-            KIWAY<span className="text-orange-500">.</span>
+            <img
+              src="/keilab-logo.svg"
+              alt="KEILAB.ID"
+              className="h-full w-full object-contain object-left"
+            />
           </Link>
 
           <nav className="hidden items-center gap-8 md:flex">
@@ -157,8 +162,8 @@ export default function Navbar() {
         href={whatsappUrl}
         target="_blank"
         rel="noreferrer"
-        aria-label="WhatsApp KIWAY"
-        title="Chat WhatsApp KIWAY"
+        aria-label="WhatsApp KEILAB"
+        title="Chat WhatsApp KEILAB"
         className="fixed bottom-6 right-6 z-[60] flex h-14 w-14 items-center justify-center rounded-full bg-green-500 text-white shadow-lg transition hover:scale-105"
       >
         <svg

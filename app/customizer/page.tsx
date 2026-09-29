@@ -82,7 +82,7 @@ export default function CustomizerPage() {
       <nav className="sticky top-0 z-40 border-b border-zinc-200 bg-white/90 backdrop-blur">
         <div className="mx-auto flex max-w-7xl items-center justify-between px-5 py-4 md:px-6">
           <Link href="/" className="text-2xl font-black tracking-tight">
-            KIWAY<span className="text-orange-500">.</span>
+            KEILAB<span className="text-orange-500">.</span>
           </Link>
 
           <div className="flex items-center gap-3">
@@ -106,7 +106,7 @@ export default function CustomizerPage() {
         <div className="flex flex-col justify-between gap-4 md:flex-row md:items-end">
           <div>
             <p className="text-xs font-bold uppercase tracking-[0.24em] text-orange-500">
-              KIWAY 3D • CUSTOMIZER
+              KEILAB.ID • CUSTOMIZER
             </p>
             <h1 className="mt-2 text-4xl font-black tracking-tight md:text-5xl">
               Buat Clicker Kamu

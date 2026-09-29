@@ -192,7 +192,7 @@ export default function AccountPage() {
     );
   }
 
-  const name = profile?.full_name?.trim() || "Customer KIWAY";
+  const name = profile?.full_name?.trim() || "Customer KEILAB";
   const totalSpent = orders.reduce(
     (sum, order) => sum + Number(order.total || 0),
     0
@@ -203,7 +203,7 @@ export default function AccountPage() {
       <div className="mx-auto max-w-5xl">
         <header className="flex items-center justify-between gap-4">
           <Link href="/" className="text-3xl font-black tracking-tight">
-            KIWAY<span className="text-orange-500">.</span>
+            KEILAB<span className="text-orange-500">.</span>
           </Link>
 
           <div className="flex items-center gap-3">
@@ -226,7 +226,7 @@ export default function AccountPage() {
 
         <section className="mt-8 rounded-[2rem] bg-zinc-950 p-7 text-white md:p-9">
           <p className="text-xs font-black uppercase tracking-[0.25em] text-orange-400">
-            KIWAY ACCOUNT
+            KEILAB ACCOUNT
           </p>
 
           <div className="mt-3 flex flex-col justify-between gap-6 md:flex-row md:items-end">
@@ -235,7 +235,7 @@ export default function AccountPage() {
                 Halo, {name} 👋
               </h1>
               <p className="mt-2 max-w-xl text-sm leading-6 text-zinc-300">
-                Kelola akun dan lihat perkembangan pesanan KIWAY kamu di sini.
+                Kelola akun dan lihat perkembangan pesanan KEILAB kamu di sini.
               </p>
             </div>
 
@@ -323,7 +323,7 @@ export default function AccountPage() {
                     <div>
                       <div className="flex flex-wrap items-center gap-2">
                         <span className="rounded-full bg-zinc-100 px-3 py-1 text-xs font-black">
-                          {order.order_code || "Order KIWAY"}
+                          {order.order_code || "Order KEILAB"}
                         </span>
 
                         <span
@@ -336,7 +336,7 @@ export default function AccountPage() {
                       </div>
 
                       <h3 className="mt-4 text-xl font-black">
-                        {order.custom_name || order.product || "Pesanan KIWAY"}
+                        {order.custom_name || order.product || "Pesanan KEILAB"}
                       </h3>
 
                       <p className="mt-1 text-sm text-zinc-500">
@@ -405,7 +405,7 @@ export default function AccountPage() {
         </section>
 
         <footer className="py-10 text-center text-xs font-semibold text-zinc-400">
-          KIWAY 3D · Custom made for you.
+          KEILAB.ID · Custom made for you.
         </footer>
       </div>
     </main>

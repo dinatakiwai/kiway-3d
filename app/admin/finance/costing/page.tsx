@@ -148,7 +148,7 @@ export default function ProductCostingPage() {
     const url = URL.createObjectURL(blob);
     const a = document.createElement("a");
     a.href = url;
-    a.download = "kiway-costing-produk.csv";
+    a.download = "keilab-costing-produk.csv";
     a.click();
     URL.revokeObjectURL(url);
   }
@@ -163,7 +163,7 @@ export default function ProductCostingPage() {
         <header className="flex flex-col gap-4 md:flex-row md:items-end md:justify-between">
           <div>
             <div className="text-xs font-black uppercase tracking-[0.2em] text-gray-400">
-              KIWAY 3D
+              KEILAB.ID
             </div>
             <h1 className="mt-1 text-3xl font-black tracking-tight">
               Costing Produk

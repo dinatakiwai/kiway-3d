@@ -124,7 +124,7 @@ export default function ProductionHistoryPage() {
         <div className="mb-8 flex flex-col gap-4 md:flex-row md:items-end md:justify-between">
           <div>
             <p className="text-sm font-semibold uppercase tracking-[0.18em] text-orange-600">
-              KIWAY 3D
+              KEILAB.ID
             </p>
             <h1 className="mt-1 text-3xl font-black">Riwayat Produksi</h1>
             <p className="mt-2 text-sm text-zinc-500">

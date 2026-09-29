@@ -261,7 +261,7 @@ export default function OwnerDashboard() {
         <header className="flex flex-col gap-4 md:flex-row md:items-end md:justify-between">
           <div>
             <div className="text-xs font-black uppercase tracking-[0.2em] text-gray-400">
-              KIWAY 3D
+              KEILAB.ID
             </div>
             <h1 className="mt-1 text-3xl font-black tracking-tight">
               Owner Dashboard
@@ -516,7 +516,7 @@ export default function OwnerDashboard() {
             <div>
               <h2 className="text-xl font-black">Order Terbaru</h2>
               <p className="text-sm text-gray-500">
-                Aktivitas order terbaru di KIWAY.
+                Aktivitas order terbaru di KEILAB.
               </p>
             </div>
             <Link

@@ -51,7 +51,7 @@ export default function AdminLoginPage() {
       <div className="w-full max-w-md">
         <div className="mb-8 text-center">
           <div className="text-3xl font-black tracking-tight">
-            KIWAY<span className="text-orange-500">.</span>
+            KEILAB<span className="text-orange-500">.</span>
           </div>
 
           <p className="mt-2 text-sm text-zinc-500">
@@ -65,7 +65,7 @@ export default function AdminLoginPage() {
           </h1>
 
           <p className="mt-2 text-sm text-zinc-500">
-            Masuk untuk mengelola pesanan KIWAY.
+            Masuk untuk mengelola pesanan KEILAB.
           </p>
 
           <form onSubmit={handleLogin} className="mt-7 space-y-5">
@@ -78,7 +78,7 @@ export default function AdminLoginPage() {
                 type="email"
                 value={email}
                 onChange={(event) => setEmail(event.target.value)}
-                placeholder="admin@kiway3d.com"
+                placeholder="admin@keilab.id"
                 autoComplete="email"
                 required
                 className="w-full rounded-2xl border border-zinc-200 bg-zinc-50 px-4 py-3 outline-none transition focus:border-orange-400 focus:bg-white"
@@ -118,7 +118,7 @@ export default function AdminLoginPage() {
         </div>
 
         <p className="mt-6 text-center text-xs text-zinc-400">
-          KIWAY 3D • Admin Area
+          KEILAB.ID • Admin Area
         </p>
       </div>
     </main>

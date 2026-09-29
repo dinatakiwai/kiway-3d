@@ -201,7 +201,7 @@ export default function AdminPage() {
     const message = [
       `Halo ${order.customer_name} 👋`,
       "",
-      "Kami dari KIWAY 3D.",
+      "Kami dari KEILAB.ID.",
       `Terkait pesanan custom *${order.custom_name}*,`,
       `status produksi saat ini: *${productionLabel(
         order.production_status
@@ -280,7 +280,7 @@ export default function AdminPage() {
         <div className="mx-auto flex max-w-7xl items-center justify-between px-6 py-5">
           <div>
             <div className="text-2xl font-black tracking-tight">
-              KIWAY<span className="text-orange-500">.</span>
+              KEILAB<span className="text-orange-500">.</span>
             </div>
 
             <p className="mt-1 text-xs font-medium text-zinc-400">
@@ -304,7 +304,7 @@ export default function AdminPage() {
         </p>
 
         <h1 className="mt-2 text-3xl font-black md:text-4xl">
-          Pesanan KIWAY
+          Pesanan KEILAB
         </h1>
 
         <p className="mt-2 text-zinc-500">

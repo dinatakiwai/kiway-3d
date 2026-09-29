@@ -1,161 +1,195 @@
 "use client";
 
-import dynamic from "next/dynamic";
+import { useEffect, useState } from "react";
 import Link from "next/link";
+import { supabase } from "@/lib/supabase";
 
-const ProductPreview3D = dynamic(
-  () => import("@/components/ProductPreview3D"),
-  {
-    ssr: false,
-    loading: () => (
-      <div className="flex h-64 items-center justify-center bg-zinc-100">
-        <span className="text-sm font-semibold text-zinc-400">
-          Menyiapkan 3D...
-        </span>
-      </div>
-    ),
-  }
-);
+type Product = {
+  id: string;
+  title: string;
+  image_url: string | null;
+  price: number;
+  stock: number;
+  category: string;
+  description: string | null;
+  is_active: boolean;
+};
 
-const products = [
-  {
-    name: "Custom Clicker",
-    category: "Custom 3D",
-    price: "Mulai Rp54.000",
-    description: "Clicker custom dengan nama dan pilihan warna.",
-    active: true,
-  },
-  {
-    name: "Custom Keycap",
-    category: "Keyboard",
-    price: "Coming Soon",
-    description: "Keycap custom dengan desain dan warna pilihanmu.",
-    active: false,
-  },
-  {
-    name: "Custom Name Tag",
-    category: "Accessories",
-    price: "Coming Soon",
-    description: "Name tag 3D custom untuk tas, koper, dan lainnya.",
-    active: false,
-  },
-  {
-    name: "Custom Phone Case",
-    category: "Phone",
-    price: "Coming Soon",
-    description: "Case HP dengan desain 3D yang unik.",
-    active: false,
-  },
-  {
-    name: "Mini Figurine",
-    category: "Figure",
-    price: "Coming Soon",
-    description: "Figurine mini custom untuk koleksi atau hadiah.",
-    active: false,
-  },
-  {
-    name: "Desk Accessories",
-    category: "Desk",
-    price: "Coming Soon",
-    description: "Berbagai aksesori meja hasil 3D printing.",
-    active: false,
-  },
-];
-
-function ProductIcon({ name }: { name: string }) {
-  return (
-    <div className="text-center">
-      <div className="mb-3 text-6xl">
-        {name === "Custom Keycap"
-          ? "🔤"
-          : name === "Custom Name Tag"
-          ? "🏷️"
-          : name === "Custom Phone Case"
-          ? "📱"
-          : name === "Mini Figurine"
-          ? "🧸"
-          : "🖥️"}
-      </div>
-    </div>
-  );
+function formatRupiah(value: number) {
+  return new Intl.NumberFormat("id-ID", {
+    style: "currency",
+    currency: "IDR",
+    maximumFractionDigits: 0,
+  }).format(value);
 }
 
 export default function CatalogPage() {
+  const [products, setProducts] = useState<Product[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState("");
+
+  async function loadProducts() {
+    setLoading(true);
+    setError("");
+
+    const { data, error: fetchError } = await supabase
+      .from("products")
+      .select(
+        "id, title, image_url, price, stock, category, description, is_active"
+      )
+      .eq("is_active", true)
+      .order("created_at", { ascending: false });
+
+    if (fetchError) setError(fetchError.message);
+    else setProducts((data ?? []) as Product[]);
+
+    setLoading(false);
+  }
+
+  useEffect(() => {
+    loadProducts();
+  }, []);
+
   return (
-    <main className="min-h-screen bg-zinc-50 px-6 py-12">
-      <div className="mx-auto max-w-6xl">
-        <div className="mb-12 text-center">
-          <p className="mb-3 text-sm font-semibold uppercase tracking-[0.25em] text-zinc-500">
-            KIWAY 3D
+    <main className="min-h-screen bg-[#faf9f7] text-zinc-900">
+      <section className="border-b border-zinc-200 bg-white">
+        <div className="mx-auto max-w-7xl px-6 py-14 md:py-20">
+          <p className="font-bold uppercase tracking-[0.2em] text-orange-500">
+            Katalog KEILAB
           </p>
-          <h1 className="text-4xl font-bold tracking-tight text-zinc-900 md:text-5xl">
-            Our Catalog
-          </h1>
-          <p className="mx-auto mt-4 max-w-2xl text-zinc-500">
-            Temukan berbagai produk 3D print unik dari KIWAY. Custom sesuai
-            keinginanmu.
-          </p>
-        </div>
 
-        <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
-          {products.map((product) => (
-            <div
-              key={product.name}
-              className="group overflow-hidden rounded-3xl border border-zinc-200 bg-white shadow-sm transition hover:-translate-y-1 hover:shadow-xl"
-            >
-              <div className="relative flex h-64 items-center justify-center overflow-hidden bg-zinc-100">
-                {product.name === "Custom Clicker" ? (
-                  <div className="h-[300px] w-full">
-                    <ProductPreview3D />
-                  </div>
-                ) : (
-                  <ProductIcon name={product.name} />
-                )}
-
-                {!product.active && (
-                  <span className="absolute bottom-4 left-1/2 -translate-x-1/2 rounded-full bg-zinc-900 px-3 py-1 text-xs font-medium text-white">
-                    COMING SOON
-                  </span>
-                )}
-              </div>
-
-              <div className="p-6">
-                <p className="text-xs font-semibold uppercase tracking-wider text-zinc-400">
-                  {product.category}
-                </p>
-                <h2 className="mt-2 text-xl font-bold text-zinc-900">
-                  {product.name}
-                </h2>
-                <p className="mt-2 min-h-[48px] text-sm leading-6 text-zinc-500">
-                  {product.description}
-                </p>
-
-                <div className="mt-5 flex items-center justify-between">
-                  <span className="font-semibold text-zinc-900">
-                    {product.price}
-                  </span>
-
-                  {product.active ? (
-                    <Link
-                      href="/catalog/clicker"
-                      className="rounded-xl bg-zinc-900 px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-zinc-700"
-                    >
-                      Lihat Produk
-                    </Link>
-                  ) : (
-                    <button
-                      disabled
-                      className="cursor-not-allowed rounded-xl bg-zinc-100 px-4 py-2.5 text-sm font-semibold text-zinc-400"
-                    >
-                      Segera
-                    </button>
-                  )}
-                </div>
-              </div>
+          <div className="mt-3 flex flex-col justify-between gap-5 md:flex-row md:items-end">
+            <div>
+              <h1 className="text-4xl font-black tracking-tight md:text-6xl">
+                Pilih produkmu.
+              </h1>
+              <p className="mt-4 max-w-2xl text-base leading-7 text-zinc-500 md:text-lg">
+                Koleksi produk 3D printing KEILAB. Produk yang kamu upload dari
+                Admin akan otomatis muncul di sini.
+              </p>
             </div>
-          ))}
+
+            <Link
+              href="/catalog/clicker"
+              className="w-fit rounded-full bg-zinc-950 px-6 py-3 font-bold text-white transition hover:bg-orange-500"
+            >
+              🎨 Custom Clicker
+            </Link>
+          </div>
         </div>
-      </div>
+      </section>
+
+      <section className="mx-auto max-w-7xl px-6 py-12 md:py-16">
+        {loading ? (
+          <div className="rounded-3xl border border-zinc-200 bg-white p-12 text-center text-zinc-500">
+            Memuat katalog...
+          </div>
+        ) : error ? (
+          <div className="rounded-3xl border border-red-200 bg-red-50 p-6 text-sm font-semibold text-red-600">
+            Katalog belum dapat dimuat: {error}
+          </div>
+        ) : products.length === 0 ? (
+          <div className="rounded-3xl border border-dashed border-zinc-300 bg-white p-12 text-center">
+            <div className="text-5xl">🛍️</div>
+            <h2 className="mt-5 text-2xl font-black">
+              Belum ada produk katalog
+            </h2>
+            <p className="mx-auto mt-2 max-w-md text-sm leading-6 text-zinc-500">
+              Produk yang ditambahkan dari Admin → Katalog akan otomatis
+              muncul di sini.
+            </p>
+          </div>
+        ) : (
+          <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+            {products.map((product) => {
+              const outOfStock = Number(product.stock) <= 0;
+
+              return (
+                <article
+                  key={product.id}
+                  className="group overflow-hidden rounded-[1.75rem] border border-zinc-200 bg-white shadow-sm transition duration-300 hover:-translate-y-1 hover:shadow-xl"
+                >
+                  <Link
+                    href={`/catalog/product/${product.id}`}
+                    className="block"
+                    aria-label={`Lihat detail ${product.title}`}
+                  >
+                    <div className="relative aspect-square overflow-hidden bg-zinc-100">
+                      {product.image_url ? (
+                        <img
+                          src={product.image_url}
+                          alt={product.title}
+                          className="h-full w-full object-cover transition duration-500 group-hover:scale-105"
+                        />
+                      ) : (
+                        <div className="flex h-full items-center justify-center text-6xl">
+                          📦
+                        </div>
+                      )}
+
+                      <div className="absolute left-4 top-4 rounded-full bg-white/90 px-3 py-1.5 text-xs font-black text-zinc-700 shadow-sm backdrop-blur">
+                        {product.category}
+                      </div>
+
+                      <div
+                        className={`absolute right-4 top-4 rounded-full px-3 py-1.5 text-xs font-black shadow-sm ${
+                          outOfStock
+                            ? "bg-red-100 text-red-600"
+                            : "bg-green-100 text-green-700"
+                        }`}
+                      >
+                        {outOfStock ? "Habis" : `Stok ${product.stock}`}
+                      </div>
+                    </div>
+
+                    <div className="p-5 pb-2">
+                      <h2 className="text-xl font-black">{product.title}</h2>
+                      <p className="mt-2 min-h-12 text-sm leading-6 text-zinc-500">
+                        {product.description || "Produk 3D printing KEILAB."}
+                      </p>
+                      <p className="mt-5 text-xl font-black">
+                        {formatRupiah(Number(product.price))}
+                      </p>
+                    </div>
+                  </Link>
+
+                  <div className="p-5 pt-3">
+                    <Link
+                      href={`/catalog/product/${product.id}`}
+                      className="flex w-full items-center justify-center rounded-xl bg-zinc-950 px-4 py-3 text-sm font-black text-white transition hover:bg-orange-500"
+                    >
+                      Lihat Detail →
+                    </Link>
+                  </div>
+                </article>
+              );
+            })}
+          </div>
+        )}
+      </section>
+
+      <section className="border-t border-zinc-200 bg-zinc-950">
+        <div className="mx-auto flex max-w-7xl flex-col items-start justify-between gap-7 px-6 py-16 md:flex-row md:items-center">
+          <div>
+            <p className="font-bold uppercase tracking-[0.2em] text-orange-400">
+              Mau yang lebih personal?
+            </p>
+            <h2 className="mt-3 text-3xl font-black text-white md:text-4xl">
+              Buat Custom Clicker kamu sendiri.
+            </h2>
+            <p className="mt-3 max-w-xl leading-7 text-zinc-400">
+              Pilih nama, warna, dan kombinasi huruf sesuai keinginanmu.
+            </p>
+          </div>
+
+          <Link
+            href="/catalog/clicker"
+            className="shrink-0 rounded-full bg-orange-500 px-7 py-4 font-black text-white transition hover:bg-orange-400"
+          >
+            Mulai Custom →
+          </Link>
+        </div>
+      </section>
     </main>
   );
 }

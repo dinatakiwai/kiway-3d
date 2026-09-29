@@ -195,7 +195,7 @@ export default function ProfitLossPage() {
     const url = URL.createObjectURL(blob);
     const a = document.createElement("a");
     a.href = url;
-    a.download = "kiway-laporan-laba-rugi.csv";
+    a.download = "keilab-laporan-laba-rugi.csv";
     a.click();
     URL.revokeObjectURL(url);
   }
@@ -209,7 +209,7 @@ export default function ProfitLossPage() {
       <div className="mx-auto max-w-7xl">
         <div className="flex flex-col gap-4 md:flex-row md:items-end md:justify-between">
           <div>
-            <div className="text-xs font-black uppercase tracking-[0.2em] text-gray-400">KIWAY 3D</div>
+            <div className="text-xs font-black uppercase tracking-[0.2em] text-gray-400">KEILAB.ID</div>
             <h1 className="mt-1 text-3xl font-black tracking-tight">Laporan Laba Rugi</h1>
             <p className="mt-1 text-sm text-gray-500">
               Ringkasan omzet, modal filament, biaya operasional, dan profit bersih.

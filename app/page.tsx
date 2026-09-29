@@ -242,8 +242,15 @@ export default function Home() {
       {/* ABOUT / CTA */}
       <section id="tentang" className="bg-orange-500">
         <div className="mx-auto max-w-7xl px-6 py-20 text-center">
+          <div className="mx-auto mb-7 flex h-14 w-[210px] items-center justify-center rounded-2xl bg-white/95 px-5 py-2 shadow-sm">
+            <img
+              src="/keilab-logo.svg"
+              alt="KEILAB.ID"
+              className="h-full w-full object-contain"
+            />
+          </div>
           <p className="font-bold uppercase tracking-widest text-orange-100">
-            KIWAY 3D
+            Tempat Ide Jadi Nyata
           </p>
 
           <h2 className="mt-3 text-4xl font-black tracking-tight text-white md:text-6xl">
@@ -265,7 +272,7 @@ export default function Home() {
 
       {/* FOOTER */}
       <footer className="bg-zinc-950 px-6 py-8 text-center text-sm text-zinc-500">
-        © 2026 KIWAY. Made with 3D printing.
+        © 2026 KEILAB. Made with 3D printing.
       </footer>
     </main>
   );

@@ -132,7 +132,7 @@ function LoginForm() {
         message.includes("email_not_confirmed")
       ) {
         setError(
-          "Email kamu belum diverifikasi. Silakan cek inbox email dan klik link verifikasi dari KIWAY."
+          "Email kamu belum diverifikasi. Silakan cek inbox email dan klik link verifikasi dari KEILAB."
         );
       } else if (
         message.includes("invalid login credentials") ||
@@ -175,7 +175,7 @@ function LoginForm() {
         "Role akun belum dapat diverifikasi. Silakan hubungi admin sebelum melanjutkan."
       );
     } catch (profileError) {
-      console.error("KIWAY login role check failed:", profileError);
+      console.error("KEILAB login role check failed:", profileError);
       await supabase.auth.signOut();
       setLoading(false);
       setError(
@@ -190,21 +190,26 @@ function LoginForm() {
         <div className="w-full">
           <Link
             href="/"
-            className="mx-auto block w-fit text-3xl font-black tracking-tight"
+            aria-label="KEILAB.ID"
+            className="mx-auto flex h-12 w-[175px] items-center justify-center"
           >
-            KIWAY<span className="text-orange-500">.</span>
+            <img
+              src="/keilab-logo.svg"
+              alt="KEILAB.ID"
+              className="h-full w-full object-contain"
+            />
           </Link>
 
           <div className="mt-8 rounded-[2rem] border border-zinc-200 bg-white p-7 shadow-sm md:p-8">
             <p className="text-xs font-black uppercase tracking-[0.25em] text-orange-500">
-              KIWAY ACCOUNT
+              KEILAB ACCOUNT
             </p>
 
             <h1 className="mt-3 text-3xl font-black tracking-tight">
               Selamat datang kembali
             </h1>
             <p className="mt-3 text-sm leading-6 text-zinc-500">
-              Login untuk melihat pesanan dan mengakses akun KIWAY kamu.
+              Login untuk melihat pesanan dan mengakses akun KEILAB kamu.
             </p>
 
             {registered && (

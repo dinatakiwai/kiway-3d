@@ -118,7 +118,7 @@ function TrackingContent() {
       <div className="mx-auto max-w-3xl">
         <section className="rounded-[2rem] bg-zinc-950 p-7 text-white md:p-10">
           <p className="text-xs font-black uppercase tracking-[0.25em] text-orange-400">
-            KIWAY TRACKING
+            KEILAB TRACKING
           </p>
 
           <h1 className="mt-3 text-3xl font-black tracking-tight md:text-4xl">
@@ -126,7 +126,7 @@ function TrackingContent() {
           </h1>
 
           <p className="mt-3 max-w-xl text-sm leading-6 text-zinc-300">
-            Masukkan kode pesanan KIWAY untuk melihat status pesananmu.
+            Masukkan kode pesanan KEILAB untuk melihat status pesananmu.
           </p>
 
           <form onSubmit={handleSubmit} className="mt-7 flex flex-col gap-3 sm:flex-row">
@@ -165,7 +165,7 @@ function TrackingContent() {
                 </h2>
 
                 <p className="mt-3 text-sm text-zinc-500">
-                  {order.custom_name || order.product || "Pesanan KIWAY"}
+                  {order.custom_name || order.product || "Pesanan KEILAB"}
                 </p>
               </div>
 

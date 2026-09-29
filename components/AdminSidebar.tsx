@@ -4,46 +4,15 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 
 const menu = [
-  {
-    title: "Dashboard",
-    href: "/admin/overview",
-    icon: "📊",
-  },
-  {
-    title: "Orders",
-    href: "/admin",
-    icon: "🛒",
-  },
-  {
-    title: "Production",
-    href: "/admin/production",
-    icon: "🏭",
-  },
-  {
-    title: "Inventory",
-    href: "/admin/inventory",
-    icon: "📦",
-  },
-  {
-    title: "Finance",
-    href: "/admin/finance",
-    icon: "💰",
-  },
-  {
-    title: "Product Master",
-    href: "/admin/finance/product-master",
-    icon: "🧩",
-  },
-  {
-    title: "Biaya Operasional",
-    href: "/admin/finance/costs",
-    icon: "🧾",
-  },
-  {
-    title: "Riwayat Produksi",
-    href: "/admin/production/history",
-    icon: "📜",
-  },
+  { title: "Dashboard", href: "/admin/overview", icon: "📊" },
+  { title: "Orders", href: "/admin", icon: "🛒" },
+  { title: "Katalog", href: "/admin/catalog", icon: "🛍️" },
+  { title: "Production", href: "/admin/production", icon: "🏭" },
+  { title: "Inventory", href: "/admin/inventory", icon: "📦" },
+  { title: "Finance", href: "/admin/finance", icon: "💰" },
+  { title: "Product Master", href: "/admin/finance/product-master", icon: "🧩" },
+  { title: "Biaya Operasional", href: "/admin/finance/costs", icon: "🧾" },
+  { title: "Riwayat Produksi", href: "/admin/production/history", icon: "📜" },
 ];
 
 export default function AdminSidebar() {
@@ -52,10 +21,13 @@ export default function AdminSidebar() {
   return (
     <aside className="fixed left-0 top-0 z-50 flex h-screen w-64 flex-col border-r bg-white">
       <div className="border-b px-6 py-5">
-        <div className="text-2xl font-black tracking-tight">
-          KIWAY<span className="text-orange-500">.</span>
+        <div className="flex h-10 w-[150px] items-center">
+          <img
+            src="/keilab-logo.svg"
+            alt="KEILAB.ID"
+            className="h-full w-full object-contain object-left"
+          />
         </div>
-
         <div className="mt-1 text-xs font-medium text-gray-500">
           3D PRINTING ADMIN
         </div>
@@ -70,8 +42,7 @@ export default function AdminSidebar() {
           const active =
             item.href === "/admin"
               ? pathname === "/admin"
-              : pathname === item.href ||
-                pathname.startsWith(item.href + "/");
+              : pathname === item.href || pathname.startsWith(item.href + "/");
 
           return (
             <Link
@@ -100,9 +71,7 @@ export default function AdminSidebar() {
         </Link>
 
         <div className="mt-3 rounded-xl bg-gray-50 p-3">
-          <div className="text-xs font-bold text-gray-800">
-            KIWAY 3D
-          </div>
+          <div className="text-xs font-bold text-gray-800">KEILAB.ID</div>
           <div className="mt-1 text-[11px] text-gray-500">
             Admin Control Center
           </div>

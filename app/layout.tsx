@@ -14,8 +14,13 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "KIWAY 3D",
-  description: "Custom 3D printed products",
+  title: "KEILAB.ID",
+  description: "KEILAB.ID — Tempat Ide Jadi Nyata. Custom 3D printed products dan produk kreatif.",
+  icons: {
+    icon: "/keilab-favicon.png",
+    shortcut: "/keilab-favicon.png",
+    apple: "/keilab-favicon.png",
+  },
 };
 
 export default function RootLayout({

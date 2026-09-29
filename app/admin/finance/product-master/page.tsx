@@ -323,7 +323,7 @@ export default function ProductMasterPage() {
     <main className="min-h-screen bg-gray-50 p-6 md:p-8">
       <div className="mx-auto max-w-6xl">
         <div className="text-xs font-black uppercase tracking-[0.2em] text-gray-400">
-          KIWAY 3D
+          KEILAB.ID
         </div>
 
         <h1 className="mt-1 text-3xl font-black">

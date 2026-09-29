@@ -1,5 +1,5 @@
 export const STORE = {
-  name: "KIWAY 3D",
+  name: "KEILAB.ID",
 
   whatsapp: "6287725932392",
 

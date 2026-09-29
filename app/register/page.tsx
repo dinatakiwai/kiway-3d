@@ -84,14 +84,19 @@ export default function RegisterPage() {
         <div className="w-full">
           <Link
             href="/"
-            className="mx-auto block w-fit text-3xl font-black tracking-tight"
+            aria-label="KEILAB.ID"
+            className="mx-auto flex h-12 w-[175px] items-center justify-center"
           >
-            KIWAY<span className="text-orange-500">.</span>
+            <img
+              src="/keilab-logo.svg"
+              alt="KEILAB.ID"
+              className="h-full w-full object-contain"
+            />
           </Link>
 
           <div className="mt-8 rounded-[2rem] border border-zinc-200 bg-white p-7 shadow-sm md:p-8">
             <p className="text-xs font-black uppercase tracking-[0.25em] text-orange-500">
-              KIWAY ACCOUNT
+              KEILAB ACCOUNT
             </p>
 
             <h1 className="mt-3 text-3xl font-black tracking-tight">

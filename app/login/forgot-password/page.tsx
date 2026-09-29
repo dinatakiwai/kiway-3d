@@ -43,7 +43,7 @@ export default function ForgotPasswordPage() {
             href="/"
             className="mx-auto block w-fit text-3xl font-black tracking-tight"
           >
-            KIWAY<span className="text-orange-500">.</span>
+            KEILAB<span className="text-orange-500">.</span>
           </Link>
 
           <div className="mt-8 rounded-[2rem] border border-zinc-200 bg-white p-7 shadow-sm md:p-8">
@@ -59,7 +59,7 @@ export default function ForgotPasswordPage() {
             </h1>
 
             <p className="mt-3 text-sm leading-6 text-zinc-500">
-              Masukkan email akun KIWAY kamu. Kami akan mengirimkan link untuk
+              Masukkan email akun KEILAB kamu. Kami akan mengirimkan link untuk
               membuat password baru.
             </p>
 

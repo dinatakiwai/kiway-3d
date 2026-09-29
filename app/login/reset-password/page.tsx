@@ -63,7 +63,7 @@ export default function ResetPasswordPage() {
             href="/"
             className="mx-auto block w-fit text-3xl font-black tracking-tight"
           >
-            KIWAY<span className="text-orange-500">.</span>
+            KEILAB<span className="text-orange-500">.</span>
           </Link>
 
           <div className="mt-8 rounded-[2rem] border border-zinc-200 bg-white p-7 shadow-sm md:p-8">

@@ -479,7 +479,7 @@ export default function InventoryPage() {
         <div className="mb-8 flex flex-col gap-4 md:flex-row md:items-end md:justify-between">
           <div>
             <p className="text-sm font-semibold uppercase tracking-[0.18em] text-orange-600">
-              KIWAY 3D
+              KEILAB.ID
             </p>
             <h1 className="mt-1 text-3xl font-black tracking-tight">
               Inventory
@@ -835,7 +835,7 @@ export default function InventoryPage() {
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-xs font-black uppercase tracking-[0.16em] text-orange-600">
-                  KIWAY 3D
+                  KEILAB.ID
                 </p>
                 <h2 className="mt-1 text-xl font-black">
                   {modal === "add"
