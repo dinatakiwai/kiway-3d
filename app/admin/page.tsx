@@ -741,9 +741,7 @@ export default function AdminPage() {
                     {selectedOrder.letters.map(
                       (letter, index) => {
                         const color =
-                          selectedOrder.letter_colors?.[
-                            String(index)
-                          ] || "#ffffff";
+                          getOrderColorMap(selectedOrder.letter_colors, "capColors")[index] || "#ffffff";
 
                         return (
                           <div
