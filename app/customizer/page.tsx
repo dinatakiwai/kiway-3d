@@ -1,11 +1,21 @@
 "use client";
 
 import dynamic from "next/dynamic";
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { addToCart } from "@/lib/cart";
 import { getClickerPrice } from "@/lib/pricing";
+import { useStoreSettings } from "@/lib/useStoreSettings";
+import { supabase } from "@/lib/supabase";
+
+type KeychainProduct = {
+  id: string;
+  title: string;
+  image_url: string | null;
+  price: number;
+  stock: number;
+};
 
 const Clicker3D = dynamic(() => import("@/components/Clicker3D"), {
   ssr: false,
@@ -16,34 +26,58 @@ const Clicker3D = dynamic(() => import("@/components/Clicker3D"), {
   ),
 });
 
-type ColorOption = { name: string; value: string };
-
-const colors: ColorOption[] = [
-  { name: "Putih", value: "#ffffff" },
-  { name: "Hitam", value: "#18181b" },
-  { name: "Merah", value: "#ef4444" },
-  { name: "Orange", value: "#f97316" },
-  { name: "Kuning", value: "#facc15" },
-  { name: "Hijau", value: "#22c55e" },
-  { name: "Biru", value: "#3b82f6" },
-  { name: "Ungu", value: "#8b5cf6" },
-  { name: "Pink", value: "#ec4899" },
-];
-
 export default function CustomizerPage() {
   const router = useRouter();
+  const { baseColors, capColors: availableCapColors, fontColors: availableFontColors } = useStoreSettings();
 
   const [name, setName] = useState("RAHMA");
   const [baseColor, setBaseColor] = useState("#ffffff");
-  const [letterColors, setLetterColors] = useState<Record<number, string>>({
+  const [capColors, setCapColors] = useState<Record<number, string>>({
     0: "#ef4444",
     1: "#18181b",
     2: "#f97316",
     3: "#ec4899",
     4: "#3b82f6",
   });
+  const [fontColors, setFontColors] = useState<Record<number, string>>({
+    0: "#ffffff",
+    1: "#ffffff",
+    2: "#ffffff",
+    3: "#ffffff",
+    4: "#ffffff",
+  });
   const [selectedLetter, setSelectedLetter] = useState<number | null>(null);
   const [quantity, setQuantity] = useState(1);
+  const [keychains, setKeychains] = useState<KeychainProduct[]>([]);
+  const [selectedKeychain, setSelectedKeychain] = useState<KeychainProduct | null>(null);
+
+  useEffect(() => {
+    const baseValues = baseColors.map((color) => color.value);
+    const capValues = availableCapColors.map((color) => color.value);
+    const fontValues = availableFontColors.map((color) => color.value);
+    if (baseValues.length) setBaseColor((current) => baseValues.includes(current) ? current : baseValues[0]);
+    if (capValues.length) setCapColors((current) => Object.fromEntries(
+      Object.entries(current).map(([index, value]) => [index, capValues.includes(value) ? value : capValues[0]])
+    ));
+    if (fontValues.length) setFontColors((current) => Object.fromEntries(
+      Object.entries(current).map(([index, value]) => [index, fontValues.includes(value) ? value : fontValues[0]])
+    ));
+  }, [baseColors, availableCapColors, availableFontColors]);
+
+  useEffect(() => {
+    let active = true;
+    async function loadKeychains() {
+      const { data } = await supabase.from("products")
+        .select("id,title,image_url,price,stock")
+        .eq("is_active", true)
+        .gt("stock", 0)
+        .ilike("category", "%gantungan%")
+        .order("created_at", { ascending: false });
+      if (active) setKeychains((data ?? []) as KeychainProduct[]);
+    }
+    loadKeychains();
+    return () => { active = false; };
+  }, []);
 
   const cleanName = useMemo(
     () => name.toUpperCase().replace(/[^A-Z0-9 ]/g, "").slice(0, 12),
@@ -52,12 +86,16 @@ export default function CustomizerPage() {
 
   const letters = cleanName.replace(/ /g, "").split("");
   const unitPrice = getClickerPrice(letters.length);
-  const orderTotal = unitPrice * quantity;
+  const unitTotal = unitPrice + (selectedKeychain?.price ?? 0);
+  const orderTotal = unitTotal * quantity;
 
-  function changeLetterColor(index: number, color: string) {
-    setLetterColors((current) => ({ ...current, [index]: color }));
+  function changeCapColor(index: number, color: string) {
+    setCapColors((current) => ({ ...current, [index]: color }));
   }
 
+  function changeFontColor(index: number, color: string) {
+    setFontColors((current) => ({ ...current, [index]: color }));
+  }
   function addCurrentToCart() {
     if (!cleanName) {
       alert("Masukkan nama clicker terlebih dahulu.");
@@ -69,8 +107,10 @@ export default function CustomizerPage() {
       name: cleanName.replace(/ /g, ""),
       letters,
       baseColor,
-      letterColors: { ...letterColors },
-      price: unitPrice,
+      capColors: { ...capColors },
+      fontColors: { ...fontColors },
+      keychain: selectedKeychain ? { productId: selectedKeychain.id, name: selectedKeychain.title, price: Number(selectedKeychain.price), imageUrl: selectedKeychain.image_url } : null,
+      price: unitTotal,
       quantity,
     });
 
@@ -79,28 +119,6 @@ export default function CustomizerPage() {
 
   return (
     <main className="min-h-screen bg-[#faf9f7] text-zinc-900">
-      <nav className="sticky top-0 z-40 border-b border-zinc-200 bg-white/90 backdrop-blur">
-        <div className="mx-auto flex max-w-7xl items-center justify-between px-5 py-4 md:px-6">
-          <Link href="/" className="text-2xl font-black tracking-tight">
-            KEILAB<span className="text-orange-500">.</span>
-          </Link>
-
-          <div className="flex items-center gap-3">
-            <Link
-              href="/catalog/clicker"
-              className="hidden rounded-full px-4 py-2 text-sm font-semibold text-zinc-500 transition hover:bg-zinc-100 hover:text-zinc-900 sm:block"
-            >
-              ← Produk
-            </Link>
-            <Link
-              href="/cart"
-              className="rounded-full border border-zinc-200 bg-white px-4 py-2 text-sm font-bold shadow-sm transition hover:bg-zinc-50"
-            >
-              🛒 Keranjang
-            </Link>
-          </div>
-        </div>
-      </nav>
 
       <section className="mx-auto max-w-7xl px-5 pb-7 pt-9 md:px-6 md:pt-12">
         <div className="flex flex-col justify-between gap-4 md:flex-row md:items-end">
@@ -148,7 +166,8 @@ export default function CustomizerPage() {
               <Clicker3D
                 letters={letters}
                 baseColor={baseColor}
-                letterColors={letterColors}
+                capColors={capColors}
+                fontColors={fontColors}
                 selectedLetter={selectedLetter}
                 onSelectLetter={setSelectedLetter}
               />
@@ -169,6 +188,36 @@ export default function CustomizerPage() {
                 <p className="text-xs text-zinc-400">Material</p>
                 <p className="mt-1 font-black">PLA</p>
               </div>
+            </div>
+
+            <div className="mt-7 border-t border-zinc-100 pt-7">
+              <div className="flex items-end justify-between gap-3">
+                <div>
+                  <label className="text-sm font-black">5. Pilih Gantungan Kunci (Opsional)</label>
+                  <p className="mt-1 text-xs leading-5 text-zinc-400">Pilih model dari foto. Harga gantungan ditambahkan ke harga clicker.</p>
+                </div>
+                {selectedKeychain && <button type="button" onClick={() => setSelectedKeychain(null)} className="shrink-0 text-xs font-bold text-orange-600">Hapus pilihan</button>}
+              </div>
+              {keychains.length ? (
+                <div className="mt-4 grid grid-cols-2 gap-3 sm:grid-cols-4">
+                  {keychains.map((keychain) => {
+                    const selected = selectedKeychain?.id === keychain.id;
+                    return (
+                      <button key={keychain.id} type="button" aria-pressed={selected} onClick={() => setSelectedKeychain(selected ? null : keychain)} className={`overflow-hidden rounded-2xl border text-left transition ${selected ? "border-orange-500 bg-orange-50 ring-2 ring-orange-100" : "border-zinc-200 hover:border-zinc-400"}`}>
+                        <div className="aspect-square bg-zinc-100">
+                          {keychain.image_url ? <img src={keychain.image_url} alt={keychain.title} className="h-full w-full object-cover" /> : <div className="flex h-full items-center justify-center text-3xl">🔑</div>}
+                        </div>
+                        <div className="p-3">
+                          <p className="line-clamp-2 text-xs font-bold">{keychain.title}</p>
+                          <p className="mt-1 text-sm font-black text-zinc-950">Rp{Number(keychain.price).toLocaleString("id-ID")}</p>
+                        </div>
+                      </button>
+                    );
+                  })}
+                </div>
+              ) : (
+                <div className="mt-4 rounded-xl bg-zinc-50 p-4 text-xs leading-5 text-zinc-500">Etalase belum tersedia. Admin dapat menambahkan foto gantungan dengan kategori “Gantungan Kunci” di menu Katalog.</div>
+              )}
             </div>
           </div>
 
@@ -196,12 +245,12 @@ export default function CustomizerPage() {
               <div className="flex items-center justify-between">
                 <label className="text-sm font-black">2. Warna Base</label>
                 <span className="text-xs font-semibold text-zinc-400">
-                  {colors.find((c) => c.value === baseColor)?.name}
+                  {baseColors.find((c) => c.value === baseColor)?.name}
                 </span>
               </div>
 
               <div className="mt-4 grid grid-cols-5 gap-3">
-                {colors.map((color) => (
+                {baseColors.map((color) => (
                   <button
                     key={color.value}
                     type="button"
@@ -223,21 +272,9 @@ export default function CustomizerPage() {
             </div>
 
             <div className="mt-7">
-              <div className="flex items-center justify-between">
-                <label className="text-sm font-black">3. Warna Huruf</label>
-                {selectedLetter !== null && (
-                  <button
-                    type="button"
-                    onClick={() => setSelectedLetter(null)}
-                    className="text-xs font-bold text-orange-500 hover:text-orange-600"
-                  >
-                    Selesai
-                  </button>
-                )}
-              </div>
-
+              <label className="text-sm font-black">3. Warna Caps</label>
               <p className="mt-2 text-xs leading-5 text-zinc-400">
-                Klik salah satu huruf di preview atau daftar di bawah.
+                Pilih huruf di preview atau daftar, lalu tentukan warna capsnya.
               </p>
 
               <div className="mt-4 space-y-2">
@@ -247,33 +284,21 @@ export default function CustomizerPage() {
                   </div>
                 ) : (
                   letters.map((letter, index) => {
-                    const currentColor = letterColors[index] ?? "#18181b";
+                    const currentColor = capColors[index] ?? availableCapColors[0]?.value ?? "#18181b";
                     return (
                       <button
                         key={`${letter}-${index}`}
                         type="button"
                         onClick={() => setSelectedLetter(index)}
-                        className={`flex w-full items-center justify-between rounded-2xl border p-3 text-left transition ${
-                          selectedLetter === index
-                            ? "border-orange-400 bg-orange-50"
-                            : "border-zinc-200 hover:border-zinc-300"
-                        }`}
+                        className={`flex w-full items-center justify-between rounded-2xl border p-3 text-left transition ${selectedLetter === index ? "border-orange-400 bg-orange-50" : "border-zinc-200 hover:border-zinc-300"}`}
                       >
                         <div className="flex items-center gap-3">
-                          <div
-                            className="flex h-9 w-9 items-center justify-center rounded-xl text-sm font-black text-white shadow-sm"
-                            style={{ backgroundColor: currentColor }}
-                          >
+                          <div className="flex h-9 w-9 items-center justify-center rounded-xl text-sm font-black text-white shadow-sm" style={{ backgroundColor: currentColor }}>
                             {letter}
                           </div>
                           <div>
-                            <p className="text-sm font-bold">
-                              Huruf {index + 1}
-                            </p>
-                            <p className="text-xs text-zinc-400">
-                              {colors.find((c) => c.value === currentColor)?.name ??
-                                "Custom"}
-                            </p>
+                            <p className="text-sm font-bold">Caps huruf {index + 1}</p>
+                            <p className="text-xs text-zinc-400">{availableCapColors.find((color) => color.value === currentColor)?.name ?? "Warna"}</p>
                           </div>
                         </div>
                         <span className="text-zinc-400">→</span>
@@ -286,26 +311,17 @@ export default function CustomizerPage() {
               {selectedLetter !== null && letters[selectedLetter] && (
                 <div className="mt-4 rounded-2xl bg-zinc-50 p-4">
                   <p className="text-xs font-bold text-zinc-500">
-                    Pilih warna untuk huruf{" "}
-                    <span className="text-zinc-900">
-                      {letters[selectedLetter]}
-                    </span>
+                    Pilih warna caps untuk huruf <span className="text-zinc-900">{letters[selectedLetter]}</span>
                   </p>
                   <div className="mt-3 flex flex-wrap gap-2">
-                    {colors.map((color) => (
+                    {availableCapColors.map((color) => (
                       <button
-                        key={`selected-${color.value}`}
+                        key={`cap-${color.value}`}
                         type="button"
                         title={color.name}
-                        aria-label={`Pilih warna ${color.name}`}
-                        onClick={() =>
-                          changeLetterColor(selectedLetter, color.value)
-                        }
-                        className={`h-9 w-9 rounded-full border-2 transition hover:scale-110 ${
-                          letterColors[selectedLetter] === color.value
-                            ? "border-orange-500 ring-2 ring-orange-200"
-                            : "border-zinc-200"
-                        }`}
+                        aria-label={`Pilih warna caps ${color.name}`}
+                        onClick={() => changeCapColor(selectedLetter, color.value)}
+                        className={`h-9 w-9 rounded-full border-2 transition hover:scale-110 ${capColors[selectedLetter] === color.value ? "border-orange-500 ring-2 ring-orange-200" : "border-zinc-200"}`}
                         style={{ backgroundColor: color.value }}
                       />
                     ))}
@@ -314,9 +330,47 @@ export default function CustomizerPage() {
               )}
             </div>
 
+            <div className="mt-7">
+              <div className="flex items-center justify-between">
+                <label className="text-sm font-black">4. Warna Huruf</label>
+                {selectedLetter !== null && letters[selectedLetter] && (
+                  <span className="text-xs font-semibold text-zinc-400">Huruf {letters[selectedLetter]}</span>
+                )}
+              </div>
+              <p className="mt-2 text-xs leading-5 text-zinc-400">
+                Warna ini khusus untuk tulisan di atas caps. Pilih huruf pada bagian Warna Caps terlebih dahulu.
+              </p>
+
+              {selectedLetter !== null && letters[selectedLetter] ? (
+                <div className="mt-4 rounded-2xl bg-zinc-50 p-4">
+                  <p className="text-xs font-bold text-zinc-500">
+                    Pilih warna tulisan untuk huruf <span className="text-zinc-900">{letters[selectedLetter]}</span>
+                  </p>
+                  <div className="mt-3 flex flex-wrap gap-2">
+                    {availableFontColors.map((color) => (
+                      <button
+                        key={`font-${color.value}`}
+                        type="button"
+                        title={color.name}
+                        aria-label={`Pilih warna tulisan ${color.name}`}
+                        onClick={() => changeFontColor(selectedLetter, color.value)}
+                        className={`h-9 w-9 rounded-full border-2 transition hover:scale-110 ${fontColors[selectedLetter] === color.value ? "border-orange-500 ring-2 ring-orange-200" : "border-zinc-200"}`}
+                        style={{ backgroundColor: color.value }}
+                      />
+                    ))}
+                  </div>
+                </div>
+              ) : (
+                <div className="mt-4 rounded-2xl bg-zinc-50 p-4 text-sm text-zinc-400">
+                  Pilih salah satu huruf untuk mengatur warna tulisannya.
+                </div>
+              )}
+            </div>
+
+
             <div className="mt-7 border-t border-zinc-200 pt-6">
               <div className="flex items-center justify-between">
-                <label className="text-sm font-black">4. Jumlah</label>
+                <label className="text-sm font-black">6. Jumlah</label>
                 <div className="flex items-center rounded-xl border border-zinc-200 bg-zinc-50">
                   <button
                     type="button"
@@ -361,6 +415,7 @@ export default function CustomizerPage() {
                     Rp{unitPrice.toLocaleString("id-ID")}
                   </span>
                 </div>
+                {selectedKeychain && <div className="flex justify-between"><span>{selectedKeychain.title}</span><span>Rp{Number(selectedKeychain.price).toLocaleString("id-ID")}</span></div>}
                 <div className="flex justify-between">
                   <span>
                     {letters.length} huruf × Rp5.000

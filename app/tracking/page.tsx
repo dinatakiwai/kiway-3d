@@ -133,7 +133,7 @@ function TrackingContent() {
             <input
               value={code}
               onChange={(event) => setCode(event.target.value.toUpperCase())}
-              placeholder="Contoh: KW-20260907-0001"
+              placeholder="Contoh: KEILAB-20260907-0001"
               className="min-w-0 flex-1 rounded-2xl border border-white/10 bg-white px-4 py-4 font-bold text-zinc-900 outline-none focus:ring-4 focus:ring-orange-500/30"
             />
 

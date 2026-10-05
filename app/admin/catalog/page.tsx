@@ -480,9 +480,10 @@ export default function AdminCatalogPage() {
                       category: e.target.value,
                     }))
                   }
-                  placeholder="Clicker"
+                  placeholder="Contoh: Gantungan Kunci"
                   className="w-full rounded-xl border border-neutral-300 px-4 py-3 outline-none focus:border-orange-500"
                 />
+                <p className="mt-2 text-xs text-neutral-500">Agar foto dan harga produk muncul di customizer clicker, gunakan kategori “Gantungan Kunci”, isi stok lebih dari 0, dan pastikan produk aktif.</p>
               </div>
 
               <div className="md:col-span-2">

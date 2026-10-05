@@ -4,7 +4,7 @@ import { useEffect, useState } from "react";
 import Link from "next/link";
 import CartBadge from "./CartBadge";
 import { supabase } from "@/lib/supabase";
-import { STORE } from "@/lib/store";
+import { useStoreSettings } from "@/lib/useStoreSettings";
 
 type UserProfile = {
   full_name: string | null;
@@ -15,6 +15,7 @@ export default function Navbar() {
   const [user, setUser] = useState<any>(null);
   const [profile, setProfile] = useState<UserProfile | null>(null);
   const [loading, setLoading] = useState(true);
+  const storeSettings = useStoreSettings();
 
   useEffect(() => {
     let mounted = true;
@@ -76,8 +77,8 @@ export default function Navbar() {
         ? "employee"
         : displayName;
 
-  const whatsappUrl = `https://wa.me/${STORE.whatsapp}?text=${encodeURIComponent(
-    "Halo KEILAB 👋 Saya ingin bertanya tentang produk dan custom 3D."
+  const whatsappUrl = `https://wa.me/${storeSettings.whatsapp}?text=${encodeURIComponent(
+    storeSettings.whatsappGreeting
   )}`;
 
   return (

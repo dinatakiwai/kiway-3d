@@ -61,7 +61,9 @@ export default function CartPage() {
                   className="flex gap-4 rounded-3xl border border-zinc-200 bg-white p-4 shadow-sm"
                 >
                   <div className="h-28 w-28 shrink-0 overflow-hidden rounded-2xl bg-zinc-100">
-                    {"imageUrl" in item && item.imageUrl ? (
+                    {item.product === "clicker" && item.keychain?.imageUrl ? (
+                      <img src={item.keychain.imageUrl} alt={item.keychain.name} className="h-full w-full object-cover" />
+                    ) : "imageUrl" in item && item.imageUrl ? (
                       <img src={item.imageUrl} alt={item.name} className="h-full w-full object-cover" />
                     ) : (
                       <div className="flex h-full items-center justify-center text-3xl">⌨️</div>
@@ -72,6 +74,7 @@ export default function CartPage() {
                     <div className="flex items-start justify-between gap-3">
                       <div>
                         <h2 className="font-black">{item.name}</h2>
+                        {item.product === "clicker" && item.keychain && <p className="mt-1 text-xs font-semibold text-orange-600">Gantungan: {item.keychain.name}</p>}
                         <p className="mt-1 text-sm text-zinc-500">
                           {rupiah(item.price)}
                         </p>

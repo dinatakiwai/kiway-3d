@@ -8,7 +8,7 @@ import {
   type CartItem,
 } from "@/lib/cart";
 import { supabase } from "@/lib/supabase";
-import { STORE } from "@/lib/store";
+import { useStoreSettings } from "@/lib/useStoreSettings";
 
 type Area = {
   id: string;
@@ -63,6 +63,7 @@ function packageItem(item: CartItem) {
 }
 
 export default function CheckoutPage() {
+  const storeSettings = useStoreSettings();
   const [items, setItems] = useState<CartItem[]>([]);
   const [customerName, setCustomerName] = useState("");
   const [customerPhone, setCustomerPhone] = useState("");
@@ -280,14 +281,21 @@ export default function CheckoutPage() {
           {
             p_customer_name: customerName.trim(),
             p_customer_phone: customerPhone.trim(),
-            p_notes: notes.trim() || null,
+            p_notes: [
+              notes.trim(),
+              item.product === "clicker" && item.keychain
+                ? `Gantungan kunci: ${item.keychain.name} (+Rp${item.keychain.price.toLocaleString("id-ID")})`
+                : "",
+            ].filter(Boolean).join("\n") || null,
             p_product: productType,
             p_custom_name: item.name,
             p_letters: letters,
             p_base_color:
               item.product === "clicker" ? item.baseColor : "",
             p_letter_colors:
-              item.product === "clicker" ? item.letterColors : {},
+              item.product === "clicker"
+                ? { capColors: item.capColors ?? {}, fontColors: item.fontColors ?? {} }
+                : {},
             p_quantity: quantity,
             p_price: price,
             p_total: itemTotal,
@@ -345,7 +353,7 @@ export default function CheckoutPage() {
         .join("\n");
 
       const message = [
-        `Halo ${STORE.name} 👋`,
+        storeSettings.whatsappGreeting,
         "",
         `Saya ${customerName.trim()} sudah membuat order:`,
         "",
@@ -364,7 +372,7 @@ export default function CheckoutPage() {
         .join("\n");
 
       window.open(
-        `https://wa.me/${phone}?text=${encodeURIComponent(message)}`,
+        `https://wa.me/${normalizePhone(storeSettings.whatsapp)}?text=${encodeURIComponent(message)}`,
         "_blank",
         "noopener,noreferrer"
       );
@@ -390,7 +398,7 @@ export default function CheckoutPage() {
         : `/tracking?order=${encodeURIComponent(trackingCode)}`;
 
     const whatsappText = [
-      `Halo ${STORE.name} 👋`,
+      storeSettings.whatsappGreeting,
       "",
       `Saya ${customerName.trim()} sudah membuat pesanan.`,
       "",
@@ -511,13 +519,13 @@ export default function CheckoutPage() {
 
               <a
                 href={`https://wa.me/${normalizePhone(
-                  customerPhone
+                  storeSettings.whatsapp
                 )}?text=${encodeURIComponent(whatsappText)}`}
                 target="_blank"
                 rel="noreferrer"
                 className="rounded-2xl bg-green-500 px-6 py-4 text-center font-black text-white hover:bg-green-600"
               >
-                💬 Bagikan ke WhatsApp
+                💬 Hubungi KEILAB untuk Pembayaran
               </a>
 
               <Link
@@ -883,8 +891,7 @@ export default function CheckoutPage() {
               </button>
 
               <p className="mt-3 text-center text-[11px] leading-5 text-zinc-400">
-                Pembayaran gateway akan kita sambungkan setelah modul ongkir
-                ini aktif.
+                Pembayaran diproses manual melalui WhatsApp setelah pesanan dibuat.
               </p>
             </aside>
           </div>

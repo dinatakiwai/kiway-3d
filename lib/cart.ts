@@ -5,13 +5,22 @@ export type ShippingPackageMeta = {
   shippingHeightCm?: number;
 };
 
+export type KeychainSelection = {
+  productId: string;
+  name: string;
+  price: number;
+  imageUrl: string | null;
+};
+
 export type ClickerCartItem = ShippingPackageMeta & {
   id: string;
   product: "clicker";
   name: string;
   letters: string[];
   baseColor: string;
-  letterColors: Record<number, string>;
+  capColors: Record<number, string>;
+  fontColors: Record<number, string>;
+  keychain?: KeychainSelection | null;
   price: number;
   quantity: number;
 };
@@ -23,7 +32,8 @@ export type CatalogCartItem = ShippingPackageMeta & {
   name: string;
   letters: string[];
   baseColor: string;
-  letterColors: Record<number, string>;
+  capColors: Record<number, string>;
+  fontColors: Record<number, string>;
   price: number;
   quantity: number;
   imageUrl?: string | null;
@@ -40,7 +50,12 @@ export function getCart(): CartItem[] {
     const raw = window.localStorage.getItem(CART_KEY);
     if (!raw) return [];
     const parsed = JSON.parse(raw);
-    return Array.isArray(parsed) ? parsed : [];
+    if (!Array.isArray(parsed)) return [];
+    return parsed.map((item) => ({
+      ...item,
+      capColors: item.capColors ?? item.letterColors ?? {},
+      fontColors: item.fontColors ?? {},
+    }));
   } catch {
     return [];
   }
@@ -64,10 +79,13 @@ export function addToCart(
           item.product,
           item.name,
           item.baseColor,
-          Object.entries(item.letterColors)
+          ...Object.entries(item.capColors)
             .sort(([a], [b]) => Number(a) - Number(b))
-            .map(([index, color]) => `${index}:${color}`)
-            .join("|"),
+            .map(([index, color]) => `cap-${index}:${color}`),
+          ...Object.entries(item.fontColors)
+            .sort(([a], [b]) => Number(a) - Number(b))
+            .map(([index, color]) => `font-${index}:${color}`),
+          item.keychain?.productId ?? "no-keychain",
         ].join("__");
 
   const existing = cart.find((cartItem) => cartItem.id === id);

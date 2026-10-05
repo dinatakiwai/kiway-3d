@@ -4,7 +4,7 @@ import { useEffect, useState } from "react";
 import Link from "next/link";
 import { useParams, useRouter } from "next/navigation";
 import { supabase } from "@/lib/supabase";
-import { STORE } from "@/lib/store";
+import { useStoreSettings } from "@/lib/useStoreSettings";
 import { addToCart } from "@/lib/cart";
 
 type Product = {
@@ -30,6 +30,7 @@ export default function ProductDetailPage() {
   const [loading, setLoading] = useState(true);
   const [adding, setAdding] = useState(false);
   const [error, setError] = useState("");
+  const storeSettings = useStoreSettings();
 
   useEffect(() => {
     async function load() {
@@ -100,7 +101,8 @@ export default function ProductDetailPage() {
       name: currentProduct.title,
       letters: [],
       baseColor: "",
-      letterColors: {},
+      capColors: {},
+      fontColors: {},
       price: Number(currentProduct.price),
       quantity,
       imageUrl: currentProduct.image_url,
@@ -117,11 +119,9 @@ export default function ProductDetailPage() {
     }, 150);
   }
 
-  const whatsappText = `Halo ${STORE.name} 👋
+  const whatsappText = `${storeSettings.whatsappGreeting}
 
-Saya ingin bertanya tentang produk:
-${currentProduct.title}
-
+Produk: ${currentProduct.title}
 Harga: ${rupiah(Number(currentProduct.price))}
 Stok: ${stock} pcs`;
 
@@ -190,7 +190,7 @@ Stok: ${stock} pcs`;
             </button>
 
             <a
-              href={`https://wa.me/${STORE.whatsapp}?text=${encodeURIComponent(whatsappText)}`}
+              href={`https://wa.me/${storeSettings.whatsapp}?text=${encodeURIComponent(whatsappText)}`}
               target="_blank"
               rel="noreferrer"
               className="mt-3 flex w-full items-center justify-center rounded-xl border border-zinc-200 px-5 py-4 font-black hover:bg-zinc-50"

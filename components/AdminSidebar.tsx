@@ -13,6 +13,8 @@ const menu = [
   { title: "Product Master", href: "/admin/finance/product-master", icon: "🧩" },
   { title: "Biaya Operasional", href: "/admin/finance/costs", icon: "🧾" },
   { title: "Riwayat Produksi", href: "/admin/production/history", icon: "📜" },
+  { title: "Manajemen Karyawan", href: "/admin/users", icon: "👥" },
+  { title: "Pengaturan Toko", href: "/admin/settings/store", icon: "⚙️" },
 ];
 
 export default function AdminSidebar() {

@@ -8,7 +8,8 @@ import * as THREE from "three";
 type Clicker3DProps = {
   letters: string[];
   baseColor: string;
-  letterColors: Record<number, string>;
+  capColors: Record<number, string>;
+  fontColors: Record<number, string>;
   selectedLetter: number | null;
   onSelectLetter: (index: number) => void;
 };
@@ -57,12 +58,12 @@ function BaseModel({
 }
 
 function LetterModel({
-  letter, index, position, color, selected, onClick,
+  letter, position, capColor, fontColor, selected, onClick,
 }: {
   letter: string;
-  index: number;
   position: [number, number, number];
-  color: string;
+  capColor: string;
+  fontColor: string;
   selected: boolean;
   onClick: () => void;
 }) {
@@ -85,18 +86,18 @@ function LetterModel({
       const name = object.name.toUpperCase();
 
       if (name.includes("CAPS") && "color" in material) {
-        material.color.set(color);
+        material.color.set(capColor);
       }
 
       if (name.includes("FONT") && "color" in material) {
-        material.color.set("#ffffff");
+        material.color.set(fontColor);
       }
 
       object.material = material;
     });
 
     return clone;
-  }, [scene, color]);
+  }, [scene, capColor, fontColor]);
 
   return (
     <group
@@ -119,7 +120,7 @@ function LetterModel({
 }
 
 function ClickerModel({
-  letters, baseColor, letterColors, selectedLetter, onSelectLetter,
+  letters, baseColor, capColors, fontColors, selectedLetter, onSelectLetter,
 }: Clicker3DProps) {
   const visibleLetters = letters.slice(0, 10).map((letter) => letter.toUpperCase());
   const count = visibleLetters.length;
@@ -172,9 +173,9 @@ function ClickerModel({
           <LetterModel
             key={`${letter}-${index}`}
             letter={letter}
-            index={index}
             position={[x, y, z]}
-            color={letterColors[index] ?? "#18181b"}
+            capColor={capColors[index] ?? "#18181b"}
+            fontColor={fontColors[index] ?? "#ffffff"}
             selected={selectedLetter === index}
             onClick={() => onSelectLetter(index)}
           />
@@ -185,7 +186,7 @@ function ClickerModel({
 }
 
 export default function Clicker3D({
-  letters, baseColor, letterColors, selectedLetter, onSelectLetter,
+  letters, baseColor, capColors, fontColors, selectedLetter, onSelectLetter,
 }: Clicker3DProps) {
   return (
     <div className="h-[480px] w-full">
@@ -225,7 +226,8 @@ export default function Clicker3D({
           <ClickerModel
             letters={letters}
             baseColor={baseColor}
-            letterColors={letterColors}
+            capColors={capColors}
+            fontColors={fontColors}
             selectedLetter={selectedLetter}
             onSelectLetter={onSelectLetter}
           />

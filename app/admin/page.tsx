@@ -24,7 +24,7 @@ type Order = {
   custom_name: string;
   letters: string[];
   base_color: string;
-  letter_colors: Record<string, string>;
+  letter_colors: Record<string, unknown>;
   quantity: number;
   price: number;
   total: number;
@@ -46,6 +46,21 @@ const rupiah = (n: number) =>
     currency: "IDR",
     maximumFractionDigits: 0,
   }).format(n);
+
+function getOrderColorMap(
+  stored: Record<string, unknown> | null | undefined,
+  key: "capColors" | "fontColors"
+): Record<number, string> {
+  if (!stored) return {};
+  const source = key === "capColors" ? stored[key] ?? stored : stored[key];
+  if (!source || typeof source !== "object" || Array.isArray(source)) return {};
+
+  return Object.fromEntries(
+    Object.entries(source as Record<string, unknown>)
+      .filter(([index, color]) => /^\d+$/.test(index) && typeof color === "string")
+      .map(([index, color]) => [Number(index), color as string])
+  );
+}
 
 function productionLabel(status: string) {
   const labels: Record<string, string> = {
@@ -656,14 +671,8 @@ export default function AdminPage() {
                   <Clicker3D
                     letters={selectedOrder.letters}
                     baseColor={selectedOrder.base_color}
-                    letterColors={Object.fromEntries(
-                      Object.entries(
-                        selectedOrder.letter_colors || {}
-                      ).map(([key, value]) => [
-                        Number(key),
-                        value,
-                      ])
-                    )}
+                    capColors={getOrderColorMap(selectedOrder.letter_colors, "capColors")}
+                    fontColors={getOrderColorMap(selectedOrder.letter_colors, "fontColors")}
                     selectedLetter={null}
                     onSelectLetter={() => undefined}
                   />

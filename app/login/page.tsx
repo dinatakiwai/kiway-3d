@@ -5,14 +5,19 @@ import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { supabase } from "@/lib/supabase";
 
-type UserRole = "admin" | "employee" | "customer";
+type UserRole = "admin" | "employee" | "manager" | "staff" | "customer";
 
 type ProfileRow = {
   role: UserRole | null;
 };
 
 function isStaffRole(role: unknown) {
-  return role === "admin" || role === "employee";
+  return (
+    role === "admin" ||
+    role === "employee" ||
+    role === "manager" ||
+    role === "staff"
+  );
 }
 
 function getMetadataRole(user: {
@@ -22,9 +27,7 @@ function getMetadataRole(user: {
   const role =
     user.user_metadata?.role ?? user.app_metadata?.role ?? null;
 
-  return role === "admin" || role === "employee" || role === "customer"
-    ? role
-    : null;
+  return isStaffRole(role) || role === "customer" ? (role as UserRole) : null;
 }
 
 async function getDestination(userId: string, user: {
