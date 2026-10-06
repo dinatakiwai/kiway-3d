@@ -134,13 +134,13 @@ function TrackingContent() {
               value={code}
               onChange={(event) => setCode(event.target.value.toUpperCase())}
               placeholder="Contoh: KEILAB-20260907-0001"
-              className="min-w-0 flex-1 rounded-2xl border border-white/10 bg-white px-4 py-4 font-bold text-zinc-90 xnone focus:ring-4 focus:ring-orange-500/30"
+              className="min-w-0 flex-1 rounded-2xl border border-white/10 bg-white px-4 py-4 font-bold text-zinc-900 outline-none focus:ring-4 focus:ring-orange-500/30"
             />
 
             <button
               type="submit"
               disabled={loading}
-              className="rounded-2xl bg-orange-500 px-7 py-4 font-black text-white hover:bg-orange-400 disabled:opac x
+              className="rounded-2xl bg-orange-500 px-7 py-4 font-black text-white hover:bg-orange-400 disabled:opacity-50"
             >
               {loading ? "Mencari..." : "Lacak Pesanan →"}
             </button>

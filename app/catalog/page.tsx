@@ -107,11 +107,11 @@ export default function CatalogPage() {
               return (
                 <article
                   key={product.id}
-                  className="group overflow-hidden rounded-[1.75rem] border border-zinc-200 bg-white shadow-sm transition duration-300 hover:-translate-y-1 hover:shadow-xl"
+                  className="group flex h-full flex-col overflow-hidden rounded-[1.75rem] border border-zinc-200 bg-white shadow-sm transition duration-300 hover:-translate-y-1 hover:shadow-xl"
                 >
                   <Link
                     href={`/catalog/product/${product.id}`}
-                    className="block"
+                    className="flex flex-1 flex-col"
                     aria-label={`Lihat detail ${product.title}`}
                   >
                     <div className="relative aspect-square overflow-hidden bg-zinc-100">
@@ -142,12 +142,12 @@ export default function CatalogPage() {
                       </div>
                     </div>
 
-                    <div className="p-5 pb-2">
+                    <div className="flex flex-1 flex-col p-5 pb-2">
                       <h2 className="text-xl font-black">{product.title}</h2>
-                      <p className="mt-2 min-h-12 text-sm leading-6 text-zinc-500">
+                      <p className="mt-2 min-h-12 line-clamp-2 text-sm leading-6 text-zinc-500">
                         {product.description || "Produk 3D printing KEILAB."}
                       </p>
-                      <p className="mt-5 text-xl font-black">
+                      <p className="mt-auto pt-4 text-xl font-black">
                         {formatRupiah(Number(product.price))}
                       </p>
                     </div>

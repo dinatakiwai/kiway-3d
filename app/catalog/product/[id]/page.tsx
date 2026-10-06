@@ -32,6 +32,7 @@ export default function ProductDetailPage() {
   const [adding, setAdding] = useState(false);
   const [error, setError] = useState("");
   const [activePhoto, setActivePhoto] = useState(0);
+  const [descriptionExpanded, setDescriptionExpanded] = useState(false);
   const storeSettings = useStoreSettings();
 
   useEffect(() => {
@@ -135,7 +136,7 @@ Stok: ${stock} pcs`;
           ← Kembali ke Katalog
         </Link>
 
-        <div className="mt-8 grid gap-10 md:grid-cols-2">
+        <div className="mt-8 grid items-start gap-10 md:grid-cols-2">
           <div className="overflow-hidden rounded-[2rem] border border-zinc-200 bg-white shadow-sm">
             <div className="aspect-square bg-zinc-100">
               {photos.length ? (
@@ -169,9 +170,12 @@ Stok: ${stock} pcs`;
             <h2 className="text-sm font-black uppercase tracking-[0.16em] text-zinc-400">
               Deskripsi Produk
             </h2>
-            <p className="mt-3 whitespace-pre-line leading-7 text-zinc-600">
+            <p className={`mt-3 whitespace-pre-line leading-7 text-zinc-600 ${descriptionExpanded ? "" : "line-clamp-2"}`}>
               {currentProduct.description || "Produk 3D printing KEILAB."}
             </p>
+            {currentProduct.description && currentProduct.description.length > 100 && <button type="button" onClick={() => setDescriptionExpanded((expanded) => !expanded)} className="mt-2 text-sm font-bold text-orange-600 hover:text-orange-700">
+              {descriptionExpanded ? "Tampilkan lebih sedikit" : "Baca selengkapnya"}
+            </button>}
 
             {!outOfStock && (
               <div className="mt-8">
