@@ -695,7 +695,7 @@ export default function AdminPage() {
                   </p>
 
                   {selectedOrder.notes && (
-                    <div className="mt-3 rounded-xl bg-white p-3 text-sm text-zinc-600">
+                    <div className="mt-3 rounded-xl bg-white p-3 text-sm whitespace-pre-line text-zinc-600">
                       <span className="font-semibold">
                         Catatan:
                       </span>{" "}

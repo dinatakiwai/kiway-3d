@@ -7,6 +7,7 @@ type Product = {
   id: string;
   title: string;
   image_url: string | null;
+  image_urls?: string[] | null;
   price: number;
   stock: number;
   category: string;
@@ -47,8 +48,7 @@ export default function AdminCatalogPage() {
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [form, setForm] = useState(emptyForm);
-  const [file, setFile] = useState<File | null>(null);
-  const [preview, setPreview] = useState<string | null>(null);
+  const [photos, setPhotos] = useState<{ url: string; file?: File }[]>([]);
   const [editing, setEditing] = useState<Product | null>(null);
   const [message, setMessage] = useState("");
   const [error, setError] = useState("");
@@ -104,12 +104,9 @@ export default function AdminCatalogPage() {
   }, []);
 
   function resetForm() {
-    if (preview?.startsWith("blob:")) {
-      URL.revokeObjectURL(preview);
-    }
+    photos.forEach((photo) => { if (photo.file) URL.revokeObjectURL(photo.url); });
     setForm(emptyForm);
-    setFile(null);
-    setPreview(null);
+    setPhotos([]);
     setEditing(null);
     setMessage("");
     setError("");
@@ -125,24 +122,26 @@ export default function AdminCatalogPage() {
       description: product.description ?? "",
       inventory_id: product.inventory_id ?? "",
     });
-    setFile(null);
-    setPreview(product.image_url);
+    setPhotos((product.image_urls?.length ? product.image_urls : product.image_url ? [product.image_url] : []).slice(0, 4).map((url) => ({ url })));
     setMessage("");
     setError("");
     window.scrollTo({ top: 0, behavior: "smooth" });
   }
 
-  function handleFileChange(nextFile: File | null) {
-    if (preview?.startsWith("blob:")) {
-      URL.revokeObjectURL(preview);
-    }
+  function handleFileChange(selected: FileList | null) {
+    if (!selected) return;
+    const picked = Array.from(selected);
+    const slots = Math.max(4 - photos.length, 0);
+    if (picked.length > slots) setError(`Maksimal 4 foto. Kamu masih bisa menambah ${slots} foto.`);
+    setPhotos((current) => [...current, ...picked.slice(0, slots).map((file) => ({ file, url: URL.createObjectURL(file) }))]);
+  }
 
-    setFile(nextFile);
-    setPreview(
-      nextFile
-        ? URL.createObjectURL(nextFile)
-        : editing?.image_url ?? null
-    );
+  function removePhoto(index: number) {
+    setPhotos((current) => {
+      const photo = current[index];
+      if (photo?.file) URL.revokeObjectURL(photo.url);
+      return current.filter((_, itemIndex) => itemIndex !== index);
+    });
   }
 
   async function uploadImage(nextFile: File) {
@@ -189,19 +188,13 @@ export default function AdminCatalogPage() {
         throw new Error("Qty / stok tidak valid.");
       }
 
-      if (file && !file.type.startsWith("image/")) {
-        throw new Error("File harus berupa foto.");
-      }
-
-      let imageUrl = editing?.image_url ?? null;
-
-      if (file) {
-        imageUrl = await uploadImage(file);
-      }
+      if (photos.length > 4 || photos.some((photo) => photo.file && !photo.file.type.startsWith("image/"))) throw new Error("Pilih maksimal 4 file foto.");
+      const savedImageUrls = await Promise.all(photos.map((photo) => photo.file ? uploadImage(photo.file) : Promise.resolve(photo.url)));
 
       const payload = {
         title,
-        image_url: imageUrl,
+        image_url: savedImageUrls[0] ?? null,
+        image_urls: savedImageUrls,
         price,
         stock: manualStock,
         category: form.category.trim() || "Lainnya",
@@ -348,34 +341,22 @@ export default function AdminCatalogPage() {
                 Foto Produk
               </label>
 
-              <label className="flex aspect-square cursor-pointer flex-col items-center justify-center overflow-hidden rounded-2xl border-2 border-dashed border-neutral-300 bg-neutral-50 text-center hover:border-orange-400">
-                {preview ? (
-                  <img
-                    src={preview}
-                    alt="Preview produk"
-                    className="h-full w-full object-cover"
-                  />
-                ) : (
-                  <>
-                    <span className="text-4xl">📷</span>
-                    <span className="mt-3 text-sm font-semibold">
-                      Pilih Foto
-                    </span>
-                    <span className="mt-1 px-5 text-xs text-neutral-500">
-                      JPG, PNG, WEBP
-                    </span>
-                  </>
-                )}
-
-                <input
-                  type="file"
-                  accept="image/*"
-                  className="hidden"
-                  onChange={(e) =>
-                    handleFileChange(e.target.files?.[0] ?? null)
-                  }
-                />
-              </label>
+              <div className="grid grid-cols-2 gap-2">
+                {photos.map((photo, index) => (
+                  <div key={`${photo.url}-${index}`} className="relative aspect-square overflow-hidden rounded-xl bg-neutral-100">
+                    <img src={photo.url} alt={`Foto produk ${index + 1}`} className="h-full w-full object-cover" />
+                    <button type="button" onClick={() => removePhoto(index)} aria-label={`Hapus foto ${index + 1}`} className="absolute right-2 top-2 rounded-full bg-black/75 px-2.5 py-1 text-xs font-bold text-white">✕</button>
+                    {index === 0 && <span className="absolute bottom-2 left-2 rounded-full bg-white/90 px-2 py-1 text-[10px] font-bold">Foto utama</span>}
+                  </div>
+                ))}
+                {photos.length < 4 && <label className="flex aspect-square cursor-pointer flex-col items-center justify-center rounded-xl border-2 border-dashed border-neutral-300 bg-neutral-50 text-center hover:border-orange-400">
+                  <span className="text-3xl">📷</span>
+                  <span className="mt-2 px-2 text-sm font-semibold">Tambah Foto</span>
+                  <span className="mt-1 text-xs text-neutral-500">{photos.length}/4</span>
+                  <input type="file" accept="image/*" multiple className="hidden" onChange={(event) => { handleFileChange(event.target.files); event.target.value = ""; }} />
+                </label>}
+              </div>
+              <p className="mt-2 text-xs text-neutral-500">Maksimal 4 foto. Foto pertama menjadi foto utama.</p>
             </div>
 
             <div className="grid gap-5 md:grid-cols-2">

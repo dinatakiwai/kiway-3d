@@ -28,7 +28,7 @@ const Clicker3D = dynamic(() => import("@/components/Clicker3D"), {
 
 export default function CustomizerPage() {
   const router = useRouter();
-  const { baseColors, capColors: availableCapColors, fontColors: availableFontColors } = useStoreSettings();
+  const { baseColors, capColors: availableCapColors, fontColors: availableFontColors, clickerStartingPrice, pricePerExtraKeycap } = useStoreSettings();
 
   const [name, setName] = useState("RAHMA");
   const [baseColor, setBaseColor] = useState("#ffffff");
@@ -85,7 +85,7 @@ export default function CustomizerPage() {
   );
 
   const letters = cleanName.replace(/ /g, "").split("");
-  const unitPrice = getClickerPrice(letters.length);
+  const unitPrice = getClickerPrice(letters.length, clickerStartingPrice, pricePerExtraKeycap);
   const unitTotal = unitPrice + (selectedKeychain?.price ?? 0);
   const orderTotal = unitTotal * quantity;
 
@@ -137,7 +137,7 @@ export default function CustomizerPage() {
 
           <div className="rounded-2xl border border-zinc-200 bg-white px-5 py-3 shadow-sm">
             <p className="text-xs font-semibold text-zinc-400">Harga mulai</p>
-            <p className="text-xl font-black">Rp54.000</p>
+            <p className="text-xl font-black">Rp{clickerStartingPrice.toLocaleString("id-ID")}</p>
           </div>
         </div>
       </section>

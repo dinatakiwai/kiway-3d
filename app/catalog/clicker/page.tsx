@@ -2,6 +2,7 @@
 
 import dynamic from "next/dynamic";
 import Link from "next/link";
+import { useStoreSettings } from "@/lib/useStoreSettings";
 
 const ProductPreview3D = dynamic(
   () => import("@/components/ProductPreview3D"),
@@ -18,6 +19,7 @@ const ProductPreview3D = dynamic(
 );
 
 export default function ClickerProductPage() {
+  const { clickerStartingPrice } = useStoreSettings();
   return (
     <main className="min-h-screen bg-zinc-50 px-5 py-10 md:px-8 md:py-14">
       <div className="mx-auto max-w-6xl">
@@ -55,7 +57,7 @@ export default function ClickerProductPage() {
                 Harga mulai
               </p>
               <p className="mt-1 text-3xl font-black text-zinc-950">
-                Rp54.000
+                Rp{clickerStartingPrice.toLocaleString("id-ID")}
               </p>
               <p className="mt-1 text-sm text-zinc-400">
                 Harga menyesuaikan jumlah huruf.

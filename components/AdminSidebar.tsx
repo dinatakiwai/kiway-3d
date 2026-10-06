@@ -15,6 +15,7 @@ const menu = [
   { title: "Riwayat Produksi", href: "/admin/production/history", icon: "📜" },
   { title: "Manajemen Karyawan", href: "/admin/users", icon: "👥" },
   { title: "Pengaturan Toko", href: "/admin/settings/store", icon: "⚙️" },
+  { title: "Harga Custom Clicker", href: "/admin/settings/pricing", icon: "🏷️" },
 ];
 
 export default function AdminSidebar() {

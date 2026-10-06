@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { DEFAULT_BASE_COLORS, DEFAULT_CAP_COLORS, DEFAULT_FONT_COLORS, STORE, type ClickerColor } from "@/lib/store";
+import { DEFAULT_CLICKER_STARTING_PRICE, DEFAULT_PRICE_PER_EXTRA_KEYCAP } from "@/lib/pricing";
 
 export type StoreSettings = {
   whatsapp: string;
@@ -9,6 +10,8 @@ export type StoreSettings = {
   baseColors: ClickerColor[];
   capColors: ClickerColor[];
   fontColors: ClickerColor[];
+  clickerStartingPrice: number;
+  pricePerExtraKeycap: number;
 };
 
 const SETTINGS_CHANGED_EVENT = "keilab-store-settings-updated";
@@ -18,6 +21,8 @@ const defaultSettings: StoreSettings = {
   baseColors: DEFAULT_BASE_COLORS,
   capColors: DEFAULT_CAP_COLORS,
   fontColors: DEFAULT_FONT_COLORS,
+  clickerStartingPrice: DEFAULT_CLICKER_STARTING_PRICE,
+  pricePerExtraKeycap: DEFAULT_PRICE_PER_EXTRA_KEYCAP,
 };
 
 export function useStoreSettings() {
@@ -43,6 +48,10 @@ export function useStoreSettings() {
             fontColors: Array.isArray(data.settings.fontColors) && data.settings.fontColors.length
               ? data.settings.fontColors
               : DEFAULT_FONT_COLORS,
+            clickerStartingPrice: Number.isFinite(Number(data.settings.clickerStartingPrice))
+              ? Number(data.settings.clickerStartingPrice) : DEFAULT_CLICKER_STARTING_PRICE,
+            pricePerExtraKeycap: Number.isFinite(Number(data.settings.pricePerExtraKeycap))
+              ? Number(data.settings.pricePerExtraKeycap) : DEFAULT_PRICE_PER_EXTRA_KEYCAP,
           } as StoreSettings);
         }
       } catch {

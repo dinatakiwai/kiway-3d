@@ -11,6 +11,7 @@ type Product = {
   id: string;
   title: string;
   image_url: string | null;
+  image_urls?: string[] | null;
   price: number;
   stock: number;
   category: string;
@@ -30,6 +31,7 @@ export default function ProductDetailPage() {
   const [loading, setLoading] = useState(true);
   const [adding, setAdding] = useState(false);
   const [error, setError] = useState("");
+  const [activePhoto, setActivePhoto] = useState(0);
   const storeSettings = useStoreSettings();
 
   useEffect(() => {
@@ -37,7 +39,7 @@ export default function ProductDetailPage() {
       if (!params?.id) return;
 
       const { data, error } = await supabase.rpc(
-        "get_public_catalog_product",
+        "get_public_catalog_product_gallery",
         { p_id: params.id }
       );
 
@@ -85,6 +87,7 @@ export default function ProductDetailPage() {
   }
 
   const currentProduct = product;
+  const photos = (currentProduct.image_urls?.length ? currentProduct.image_urls : currentProduct.image_url ? [currentProduct.image_url] : []).slice(0, 4);
 
   const stock = Number(currentProduct.stock);
   const outOfStock = stock <= 0;
@@ -135,12 +138,17 @@ Stok: ${stock} pcs`;
         <div className="mt-8 grid gap-10 md:grid-cols-2">
           <div className="overflow-hidden rounded-[2rem] border border-zinc-200 bg-white shadow-sm">
             <div className="aspect-square bg-zinc-100">
-              {currentProduct.image_url ? (
-                <img src={currentProduct.image_url} alt={currentProduct.title} className="h-full w-full object-cover" />
+              {photos.length ? (
+                <img src={photos[Math.min(activePhoto, photos.length - 1)]} alt={`${currentProduct.title} ${activePhoto + 1}`} className="h-full w-full object-cover" />
               ) : (
                 <div className="flex h-full items-center justify-center text-8xl">📦</div>
               )}
             </div>
+            {photos.length > 1 && <div className="flex gap-2 p-3">
+              {photos.map((photo, index) => <button key={photo} type="button" onClick={() => setActivePhoto(index)} aria-label={`Lihat foto ${index + 1}`} className={`h-16 w-16 overflow-hidden rounded-lg border-2 ${activePhoto === index ? "border-orange-500" : "border-transparent"}`}>
+                <img src={photo} alt={`${currentProduct.title} ${index + 1}`} className="h-full w-full object-cover" />
+              </button>)}
+            </div>}
           </div>
 
           <div className="rounded-[2rem] border border-zinc-200 bg-white p-7 shadow-sm md:p-9">

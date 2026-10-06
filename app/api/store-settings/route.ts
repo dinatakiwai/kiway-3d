@@ -8,6 +8,8 @@ const defaultSettings = {
   baseColors: DEFAULT_BASE_COLORS,
   capColors: DEFAULT_CAP_COLORS,
   fontColors: DEFAULT_FONT_COLORS,
+  clickerStartingPrice: 54000,
+  pricePerExtraKeycap: 5000,
 };
 
 async function superAdmin(request: NextRequest) {
@@ -37,7 +39,7 @@ function validColors(value: unknown): value is ClickerColor[] {
 
 export async function GET() {
   const { data, error } = await supabaseAdmin.from("store_settings")
-    .select("whatsapp,whatsapp_greeting,base_colors,cap_colors,font_colors")
+    .select("whatsapp,whatsapp_greeting,base_colors,cap_colors,font_colors,clicker_starting_price,price_per_extra_keycap")
     .eq("id", "default").maybeSingle();
   if (error || !data) return NextResponse.json({ settings: defaultSettings });
   return NextResponse.json({ settings: {
@@ -46,6 +48,8 @@ export async function GET() {
     baseColors: Array.isArray(data.base_colors) && data.base_colors.length ? data.base_colors : DEFAULT_BASE_COLORS,
     capColors: Array.isArray(data.cap_colors) && data.cap_colors.length ? data.cap_colors : DEFAULT_CAP_COLORS,
     fontColors: Array.isArray(data.font_colors) && data.font_colors.length ? data.font_colors : DEFAULT_FONT_COLORS,
+    clickerStartingPrice: data.clicker_starting_price,
+    pricePerExtraKeycap: data.price_per_extra_keycap,
   } });
 }
 
@@ -65,15 +69,14 @@ export async function PUT(request: NextRequest) {
     return NextResponse.json({ error: "Periksa nomor WhatsApp, pesan pembuka, dan daftar warna." }, { status: 400 });
   }
 
-  const { data, error } = await supabaseAdmin.from("store_settings").upsert({
-    id: "default",
+  const { data, error } = await supabaseAdmin.from("store_settings").update({
     whatsapp,
     whatsapp_greeting: whatsappGreeting,
     base_colors: baseColors.map((color) => ({ name: color.name.trim(), value: color.value.toLowerCase() })),
     cap_colors: capColors.map((color) => ({ name: color.name.trim(), value: color.value.toLowerCase() })),
     font_colors: fontColors.map((color) => ({ name: color.name.trim(), value: color.value.toLowerCase() })),
     updated_at: new Date().toISOString(),
-  }, { onConflict: "id" }).select("whatsapp,whatsapp_greeting,base_colors,cap_colors,font_colors").single();
+  }).eq("id", "default").select("whatsapp,whatsapp_greeting,base_colors,cap_colors,font_colors").single();
 
   if (error || !data) {
     return NextResponse.json({ error: "Pengaturan gagal disimpan. Pastikan SQL pengaturan toko sudah dijalankan di Supabase." }, { status: 500 });

@@ -180,6 +180,7 @@ export default function StoreSettingsPage() {
             </div>
           </div>
 
+
           <div className="space-y-6 rounded-2xl border border-zinc-200 bg-white p-5 shadow-sm md:p-8">
             <div>
               <h2 className="text-xl font-black text-zinc-950">Stok Warna Filament</h2>
