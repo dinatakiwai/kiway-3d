@@ -39,7 +39,6 @@ export default function UsersPage() {
     if (!session) { router.replace("/admin/login"); return; }
     const response = await fetch("/api/admin/users", { headers: { Authorization: `Bearer ${session.access_token}` } });
     const body = await response.json();
-    if (response.status === 403) { router.replace("/admin"); return; }
     if (response.ok) setUsers(body.users);
     else setNotice(body.error ?? "Gagal memuat akun.");
     setLoading(false);

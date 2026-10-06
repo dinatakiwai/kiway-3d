@@ -3,17 +3,22 @@ import { supabaseAdmin } from "@/lib/supabaseAdmin";
 
 const DEFAULTS = { clicker_starting_price: 54000, price_per_extra_keycap: 5000 };
 
-async function isSuperAdmin(request: NextRequest) {
+async function superAdminError(request: NextRequest) {
   const token = request.headers.get("authorization")?.replace(/^Bearer\s+/i, "");
-  if (!token) return false;
+  if (!token) return "Sesi login tidak ditemukan. Keluar lalu masuk kembali.";
   const { data: { user }, error } = await supabaseAdmin.auth.getUser(token);
-  if (error || !user) return false;
-  const { data } = await supabaseAdmin.from("profiles").select("role,is_active").eq("id", user.id).maybeSingle();
-  return data?.role === "admin" && data.is_active !== false;
+  if (error || !user) return "Sesi login situs tidak cocok dengan Supabase server. Pastikan NEXT_PUBLIC_SUPABASE_URL dan SUPABASE_SERVICE_ROLE_KEY di Vercel berasal dari proyek Supabase yang sama, lalu masuk kembali.";
+  const { data, error: profileError } = await supabaseAdmin.from("profiles").select("role,is_active").eq("id", user.id).maybeSingle();
+  if (profileError) return "Profil akun tidak dapat dibaca oleh server. Periksa kredensial Supabase Production di Vercel.";
+  if (!data) return "Akun ini belum memiliki profil di tabel profiles pada proyek Supabase online.";
+  if (data.role !== "admin") return `Role akun di Supabase online adalah '${data.role}', sedangkan menu ini memerlukan role 'admin'.`;
+  if (data.is_active === false) return "Akun Super Admin ini berstatus nonaktif di Supabase online.";
+  return null;
 }
 
 export async function GET(request: NextRequest) {
-  if (!await isSuperAdmin(request)) return NextResponse.json({ error: "Menu ini hanya dapat dibuka Super Admin." }, { status: 403 });
+  const accessError = await superAdminError(request);
+  if (accessError) return NextResponse.json({ error: accessError }, { status: 403 });
   const { data, error } = await supabaseAdmin.from("store_settings")
     .select("clicker_starting_price,price_per_extra_keycap").eq("id", "default").maybeSingle();
   if (error) return NextResponse.json({ error: "Pengaturan harga belum tersedia. Jalankan pembaruan database terlebih dahulu." }, { status: 500 });
@@ -24,7 +29,8 @@ export async function GET(request: NextRequest) {
 }
 
 export async function PUT(request: NextRequest) {
-  if (!await isSuperAdmin(request)) return NextResponse.json({ error: "Menu ini hanya dapat diubah Super Admin." }, { status: 403 });
+  const accessError = await superAdminError(request);
+  if (accessError) return NextResponse.json({ error: accessError }, { status: 403 });
   const body = await request.json().catch(() => null);
   const clickerStartingPrice = Number(body?.clickerStartingPrice);
   const pricePerExtraKeycap = Number(body?.pricePerExtraKeycap);

@@ -16,15 +16,20 @@ function validPermissions(value: unknown): value is Permissions {
 
 async function superAdmin(request: NextRequest) {
   const token = request.headers.get("authorization")?.replace(/^Bearer\s+/i, "");
-  if (!token) return null;
+  if (!token) return { user: null, error: "Sesi login tidak ditemukan. Keluar lalu masuk kembali." };
   const { data: { user }, error } = await supabaseAdmin.auth.getUser(token);
-  if (error || !user) return null;
-  const { data } = await supabaseAdmin.from("profiles").select("role,is_active").eq("id", user.id).maybeSingle();
-  return data?.role === "admin" && data.is_active !== false ? user : null;
+  if (error || !user) return { user: null, error: "Sesi login situs tidak cocok dengan Supabase server. Pastikan NEXT_PUBLIC_SUPABASE_URL dan SUPABASE_SERVICE_ROLE_KEY di Vercel berasal dari proyek Supabase yang sama, lalu masuk kembali." };
+  const { data, error: profileError } = await supabaseAdmin.from("profiles").select("role,is_active").eq("id", user.id).maybeSingle();
+  if (profileError) return { user: null, error: "Profil akun tidak dapat dibaca oleh server. Periksa kredensial Supabase Production di Vercel." };
+  if (!data) return { user: null, error: "Akun ini belum memiliki profil di tabel profiles pada proyek Supabase online." };
+  if (data.role !== "admin") return { user: null, error: `Role akun di Supabase online adalah '${data.role}', sedangkan halaman ini memerlukan role 'admin'.` };
+  if (data.is_active === false) return { user: null, error: "Akun Super Admin ini berstatus nonaktif di Supabase online." };
+  return { user, error: null };
 }
 
 export async function GET(request: NextRequest) {
-  if (!await superAdmin(request)) return fail("Akses hanya untuk Super Admin.", 403);
+  const access = await superAdmin(request);
+  if (access.error) return fail(access.error, 403);
   const { data, error } = await supabaseAdmin.from("profiles")
     .select("id,full_name,phone,role,is_active,permissions,created_at")
     .in("role", ["manager", "staff"]).order("created_at", { ascending: false });
@@ -36,7 +41,8 @@ export async function GET(request: NextRequest) {
 }
 
 export async function POST(request: NextRequest) {
-  if (!await superAdmin(request)) return fail("Akses hanya untuk Super Admin.", 403);
+  const access = await superAdmin(request);
+  if (access.error) return fail(access.error, 403);
   const body = await request.json().catch(() => null);
   const email = typeof body?.email === "string" ? body.email.trim().toLowerCase() : "";
   const password = typeof body?.password === "string" ? body.password : "";
@@ -61,8 +67,9 @@ export async function POST(request: NextRequest) {
 }
 
 export async function PATCH(request: NextRequest) {
-  const actor = await superAdmin(request);
-  if (!actor) return fail("Akses hanya untuk Super Admin.", 403);
+  const access = await superAdmin(request);
+  if (access.error || !access.user) return fail(access.error ?? "Akses hanya untuk Super Admin.", 403);
+  const actor = access.user;
   const body = await request.json().catch(() => null);
   if (!body?.id || body.id === actor.id) return fail("Akun target tidak valid.");
   const { data: target } = await supabaseAdmin.from("profiles").select("role").eq("id", body.id).maybeSingle();
