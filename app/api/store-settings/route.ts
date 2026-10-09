@@ -84,7 +84,8 @@ export async function PUT(request: NextRequest) {
     return NextResponse.json({ error: "Periksa nomor WhatsApp, pesan pembuka, daftar warna, dan link sosial media (gunakan https://)." }, { status: 400 });
   }
 
-  const { data, error } = await supabaseAdmin.from("store_settings").update({
+  const { data, error } = await supabaseAdmin.from("store_settings").upsert({
+    id: "default",
     whatsapp,
     whatsapp_greeting: whatsappGreeting,
     base_colors: baseColors.map((color) => ({ name: color.name.trim(), value: color.value.toLowerCase() })),
@@ -92,10 +93,10 @@ export async function PUT(request: NextRequest) {
     font_colors: fontColors.map((color) => ({ name: color.name.trim(), value: color.value.toLowerCase() })),
     ...socials,
     updated_at: new Date().toISOString(),
-  }).eq("id", "default").select("whatsapp,whatsapp_greeting,base_colors,cap_colors,font_colors,instagram_url,tiktok_url,shopee_url").single();
+  }, { onConflict: "id" }).select("whatsapp,whatsapp_greeting,base_colors,cap_colors,font_colors,instagram_url,tiktok_url,shopee_url").single();
 
   if (error || !data) {
-    const missingSocialColumns = error?.code === "42703" || /instagram_url|tiktok_url|shopee_url/i.test(error?.message ?? "");
+    const missingSocialColumns = error?.code === "42703" || error?.code === "PGRST204" || /instagram_url|tiktok_url|shopee_url/i.test(error?.message ?? "");
     return NextResponse.json({ error: missingSocialColumns
       ? "Kolom media sosial belum tersedia. Jalankan migration 202610090001_product_options_video_socials.sql di Supabase SQL Editor, lalu coba simpan lagi."
       : "Pengaturan gagal disimpan. Periksa koneksi dan migration pengaturan toko di Supabase." }, { status: 500 });

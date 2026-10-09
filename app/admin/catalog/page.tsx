@@ -11,6 +11,7 @@ type Product = {
   video_urls?: string[] | null;
   option_groups?: ProductOptionGroup[] | null;
   price: number;
+  compare_at_price?: number | null;
   stock: number;
   category: string;
   description: string | null;
@@ -35,6 +36,7 @@ type InventoryItem = {
 const emptyForm = {
   title: "",
   price: "",
+  compare_at_price: "",
   stock: "0",
   category: "Lainnya",
   description: "",
@@ -132,6 +134,7 @@ export default function AdminCatalogPage() {
     setForm({
       title: product.title,
       price: String(product.price),
+      compare_at_price: product.compare_at_price ? String(product.compare_at_price) : "",
       stock: String(product.stock),
       category: product.category,
       description: product.description ?? "",
@@ -220,6 +223,8 @@ export default function AdminCatalogPage() {
       if (!Number.isFinite(price) || price < 0) {
         throw new Error("Harga produk tidak valid.");
       }
+      const compareAtPrice = form.compare_at_price.trim() ? Number(form.compare_at_price) : null;
+      if (compareAtPrice !== null && (!Number.isFinite(compareAtPrice) || compareAtPrice <= price)) throw new Error("Harga sebelum diskon harus lebih tinggi dari harga jual.");
 
       if (!Number.isFinite(manualStock) || manualStock < 0) {
         throw new Error("Qty / stok tidak valid.");
@@ -249,6 +254,7 @@ export default function AdminCatalogPage() {
           }))),
         }))),
         price,
+        compare_at_price: compareAtPrice,
         stock: manualStock,
         category: form.category.trim() || "Lainnya",
         description: form.description.trim() || null,
@@ -462,6 +468,12 @@ export default function AdminCatalogPage() {
                   placeholder="84000"
                   className="w-full rounded-xl border border-neutral-300 px-4 py-3 outline-none focus:border-orange-500"
                 />
+              </div>
+
+              <div>
+                <label className="mb-2 block text-sm font-semibold">Harga sebelum diskon (opsional)</label>
+                <input type="number" min="0" value={form.compare_at_price} onChange={(e) => setForm((v) => ({ ...v, compare_at_price: e.target.value }))} placeholder="Contoh: 98000" className="w-full rounded-xl border border-neutral-300 px-4 py-3 outline-none focus:border-orange-500" />
+                <p className="mt-1 text-xs text-neutral-500">Isi lebih tinggi dari harga jual untuk menampilkan harga coret.</p>
               </div>
 
               <div>
@@ -703,6 +715,7 @@ export default function AdminCatalogPage() {
                       <div className="mt-4">
                         <div className="text-lg font-black">
                           {formatRupiah(Number(product.price))}
+                          {product.compare_at_price && product.compare_at_price > product.price ? <span className="ml-2 text-sm font-medium text-neutral-400 line-through">{formatRupiah(Number(product.compare_at_price))}</span> : null}
                         </div>
 
                         <div className="text-sm text-neutral-500">

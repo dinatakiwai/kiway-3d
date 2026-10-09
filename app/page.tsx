@@ -10,6 +10,7 @@ type Product = {
   title: string;
   image_url: string | null;
   price: number;
+  compare_at_price?: number | null;
   stock: number;
   category: string;
   description: string | null;
@@ -33,7 +34,7 @@ export default function Home() {
     async function loadProducts() {
       const { data, error } = await supabase
         .from("products")
-        .select("id, title, image_url, price, stock, category, description, is_active")
+        .select("id, title, image_url, price, compare_at_price, stock, category, description, is_active")
         .eq("is_active", true)
         .order("created_at", { ascending: false });
 
@@ -207,8 +208,9 @@ export default function Home() {
                           <p className="mt-2 min-h-12 line-clamp-2 text-sm leading-6 text-zinc-500">
                             {product.description || "Produk 3D printing KEILAB."}
                           </p>
-                          <p className="mt-auto pt-4 text-xl font-black">
-                            {formatRupiah(Number(product.price))}
+                          <p className="mt-auto flex flex-wrap items-baseline gap-2 pt-4 text-xl font-black">
+                            <span className="text-orange-600">{formatRupiah(Number(product.price))}</span>
+                            {product.compare_at_price && product.compare_at_price > product.price ? <span className="text-sm font-medium text-zinc-400 line-through">{formatRupiah(Number(product.compare_at_price))}</span> : null}
                           </p>
                         </div>
                       </Link>

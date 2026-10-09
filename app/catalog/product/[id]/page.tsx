@@ -15,6 +15,7 @@ type Product = {
   video_urls?: string[] | null;
   option_groups?: ProductOptionGroup[] | null;
   price: number;
+  compare_at_price?: number | null;
   stock: number;
   category: string;
   description: string | null;
@@ -228,7 +229,7 @@ Stok: ${stock} pcs`;
             </div>
 
             <h1 className="mt-5 text-4xl font-black tracking-tight md:text-5xl">{currentProduct.title}</h1>
-            <p className="mt-5 text-3xl font-black">{rupiah(variantPrice)}</p>
+            <div className="mt-5 flex flex-wrap items-baseline gap-3"><p className="text-3xl font-black text-orange-600">{rupiah(variantPrice)}</p>{currentProduct.compare_at_price && currentProduct.compare_at_price > Number(currentProduct.price) && !fixedPrice ? <p className="text-lg font-semibold text-zinc-400 line-through">{rupiah(Number(currentProduct.compare_at_price) + variantPrice - Number(currentProduct.price))}</p> : null}</div>
 
             <div className="my-8 h-px bg-zinc-200" />
 

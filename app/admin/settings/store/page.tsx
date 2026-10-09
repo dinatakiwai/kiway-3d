@@ -202,16 +202,18 @@ export default function StoreSettingsPage() {
           </div>
 
 
-          <div className="space-y-6 rounded-2xl border border-zinc-200 bg-white p-5 shadow-sm md:p-8">
-            <div>
-              <h2 className="text-xl font-black text-zinc-950">Stok Warna Filament</h2>
-              <p className="mt-1 text-sm text-zinc-500">Atur stok warna setiap bagian secara terpisah. Menghapus warna dari satu bagian tidak menghapusnya dari bagian lain.</p>
+          <details className="group rounded-2xl border border-zinc-200 bg-white p-5 shadow-sm md:p-8">
+            <summary className="flex cursor-pointer list-none items-center justify-between gap-4 [&::-webkit-details-marker]:hidden">
+              <span><span className="block text-xl font-black text-zinc-950">Stok Warna Filament</span><span className="mt-1 block text-sm text-zinc-500">Atur warna untuk setiap bagian clicker.</span></span>
+              <span className="grid h-9 w-9 shrink-0 place-items-center rounded-full bg-zinc-100 text-lg transition group-open:rotate-180">⌄</span>
+            </summary>
+            <div className="mt-6 space-y-5">
+              <PaletteEditor title="Warna Base" description="Warna untuk badan / dudukan clicker." colors={baseColors} onChange={setBaseColors} />
+              <PaletteEditor title="Warna Caps" description="Warna untuk masing-masing caps huruf." colors={capColors} onChange={setCapColors} />
+              <PaletteEditor title="Warna Huruf" description="Warna untuk tulisan di atas caps." colors={fontColors} onChange={setFontColors} />
+              <p className="text-xs text-zinc-500">Setiap bagian wajib memiliki minimal satu warna. Maksimal 24 warna per bagian.</p>
             </div>
-            <PaletteEditor title="Warna Base" description="Warna untuk badan / dudukan clicker." colors={baseColors} onChange={setBaseColors} />
-            <PaletteEditor title="Warna Caps" description="Warna untuk masing-masing caps huruf." colors={capColors} onChange={setCapColors} />
-            <PaletteEditor title="Warna Huruf" description="Warna untuk tulisan di atas caps." colors={fontColors} onChange={setFontColors} />
-            <p className="text-xs text-zinc-500">Setiap bagian wajib memiliki minimal satu warna. Maksimal 24 warna per bagian.</p>
-          </div>
+          </details>
 
           <div className="flex flex-col gap-3 border-t border-zinc-200 pt-5 sm:flex-row sm:items-center sm:justify-between">
             <p className="text-xs text-zinc-500">Simpan agar perubahan berlaku untuk pelanggan.</p>
