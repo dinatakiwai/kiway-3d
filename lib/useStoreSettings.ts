@@ -10,6 +10,9 @@ export type StoreSettings = {
   baseColors: ClickerColor[];
   capColors: ClickerColor[];
   fontColors: ClickerColor[];
+  instagramUrl: string;
+  tiktokUrl: string;
+  shopeeUrl: string;
   clickerStartingPrice: number;
   pricePerExtraKeycap: number;
 };
@@ -21,6 +24,9 @@ const defaultSettings: StoreSettings = {
   baseColors: DEFAULT_BASE_COLORS,
   capColors: DEFAULT_CAP_COLORS,
   fontColors: DEFAULT_FONT_COLORS,
+  instagramUrl: "",
+  tiktokUrl: "",
+  shopeeUrl: "",
   clickerStartingPrice: DEFAULT_CLICKER_STARTING_PRICE,
   pricePerExtraKeycap: DEFAULT_PRICE_PER_EXTRA_KEYCAP,
 };

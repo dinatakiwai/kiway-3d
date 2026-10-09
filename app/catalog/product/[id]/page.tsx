@@ -12,11 +12,28 @@ type Product = {
   title: string;
   image_url: string | null;
   image_urls?: string[] | null;
+  video_urls?: string[] | null;
+  option_groups?: ProductOptionGroup[] | null;
   price: number;
   stock: number;
   category: string;
   description: string | null;
 };
+
+type ProductOptionChoice = { label: string; price: number; stock: number | null; imageUrl?: string | null };
+type ProductOptionGroup = { id: string; name: string; priceMode?: "add" | "set"; choices: ProductOptionChoice[] };
+
+function DescriptionWithLinks({ text }: { text: string }) {
+  const urlPattern = /(https?:\/\/[^\s]+|www\.[^\s]+)/gi;
+  const parts = text.split(urlPattern);
+  return <>{parts.map((part, index) => {
+    if (!/^(https?:\/\/|www\.)/i.test(part)) return <span key={index}>{part}</span>;
+    const cleanUrl = part.replace(/[),.!?;:]+$/, "");
+    const suffix = part.slice(cleanUrl.length);
+    const href = cleanUrl.startsWith("www.") ? `https://${cleanUrl}` : cleanUrl;
+    return <span key={index}><a href={href} target="_blank" rel="noreferrer" className="font-semibold text-orange-600 underline underline-offset-2">{cleanUrl}</a>{suffix}</span>;
+  })}</>;
+}
 
 function rupiah(value: number) {
   return `Rp${value.toLocaleString("id-ID")}`;
@@ -31,7 +48,9 @@ export default function ProductDetailPage() {
   const [loading, setLoading] = useState(true);
   const [adding, setAdding] = useState(false);
   const [error, setError] = useState("");
-  const [activePhoto, setActivePhoto] = useState(0);
+  const [activeMedia, setActiveMedia] = useState(-1);
+  const [selectedChoices, setSelectedChoices] = useState<Record<string, string>>({});
+  const [shareMessage, setShareMessage] = useState("");
   const [descriptionExpanded, setDescriptionExpanded] = useState(false);
   const storeSettings = useStoreSettings();
 
@@ -49,7 +68,11 @@ export default function ProductDetailPage() {
       } else {
         const row = Array.isArray(data) ? data[0] : data;
         if (!row) setError("Produk tidak ditemukan atau sudah tidak tersedia.");
-        else setProduct(row as Product);
+        else {
+          const loaded = row as Product;
+          setProduct(loaded);
+          setSelectedChoices(Object.fromEntries((loaded.option_groups ?? []).map((group) => [group.id, (group.choices ?? []).find((choice) => choice.stock == null || choice.stock > 0)?.label ?? ""])));
+        }
       }
 
       setLoading(false);
@@ -89,10 +112,49 @@ export default function ProductDetailPage() {
 
   const currentProduct = product;
   const photos = (currentProduct.image_urls?.length ? currentProduct.image_urls : currentProduct.image_url ? [currentProduct.image_url] : []).slice(0, 4);
-
-  const stock = Number(currentProduct.stock);
-  const outOfStock = stock <= 0;
+  const videos = (currentProduct.video_urls ?? []).slice(0, 4);
+  const media = [...photos.map((url) => ({ type: "image" as const, url })), ...videos.map((url) => ({ type: "video" as const, url }))];
+  const groups = currentProduct.option_groups ?? [];
+  const selectedOptions = groups.map((group) => ({
+    groupName: group.name,
+    choiceLabel: selectedChoices[group.id] ?? "",
+    price: Number(group.choices.find((choice) => choice.label === selectedChoices[group.id])?.price ?? 0),
+    priceMode: group.priceMode === "set" ? "set" as const : "add" as const,
+    imageUrl: group.choices.find((choice) => choice.label === selectedChoices[group.id])?.imageUrl ?? null,
+  }));
+  const fixedPrice = selectedOptions.find((item) => item.priceMode === "set" && item.choiceLabel)?.price;
+  const variantPrice = (fixedPrice ?? Number(currentProduct.price)) + selectedOptions.filter((item) => item.priceMode === "add").reduce((total, item) => total + (item.choiceLabel ? item.price : 0), 0);
+  const selectedVariantImage = selectedOptions.find((item) => item.imageUrl)?.imageUrl ?? null;
+  const selectedStocks = groups.map((group) => group.choices.find((choice) => choice.label === selectedChoices[group.id])?.stock).filter((value): value is number => typeof value === "number");
+  const stock = Math.min(Number(currentProduct.stock), ...(selectedStocks.length ? selectedStocks : [Number(currentProduct.stock)]));
+  const missingOption = groups.some((group) => !group.choices.some((choice) => choice.label === selectedChoices[group.id] && choice.stock !== 0));
+  const outOfStock = stock <= 0 || missingOption;
   const maxQty = Math.max(1, stock);
+  const activeMediaItem = activeMedia === -1 && selectedVariantImage
+    ? { type: "image" as const, url: selectedVariantImage }
+    : media[Math.max(0, Math.min(activeMedia, media.length - 1))];
+
+  async function shareProduct() {
+    const url = window.location.href;
+    try {
+      if (navigator.share) await navigator.share({ title: currentProduct.title, text: `Lihat ${currentProduct.title} di KEILAB`, url });
+      else {
+        await navigator.clipboard.writeText(url);
+        setShareMessage("Link produk disalin.");
+      }
+    } catch (err) {
+      if (err instanceof Error && err.name !== "AbortError") setShareMessage("Link belum bisa dibagikan. Coba salin alamat halaman ini.");
+    }
+  }
+
+  async function copyProductLink() {
+    try {
+      await navigator.clipboard.writeText(window.location.href);
+      setShareMessage("Link produk disalin.");
+    } catch {
+      setShareMessage("Browser belum mengizinkan menyalin link. Salin alamat halaman dari kolom browser.");
+    }
+  }
 
   function addProductToCart() {
     if (outOfStock) return;
@@ -107,9 +169,10 @@ export default function ProductDetailPage() {
       baseColor: "",
       capColors: {},
       fontColors: {},
-      price: Number(currentProduct.price),
+      price: variantPrice,
       quantity,
       imageUrl: currentProduct.image_url,
+      selectedOptions,
       // Sementara default paket katalog 500g.
       // Nanti bisa diganti per produk dari Admin Catalog.
       shippingWeightGram: 500,
@@ -126,7 +189,7 @@ export default function ProductDetailPage() {
   const whatsappText = `${storeSettings.whatsappGreeting}
 
 Produk: ${currentProduct.title}
-Harga: ${rupiah(Number(currentProduct.price))}
+Harga: ${rupiah(variantPrice)}
 Stok: ${stock} pcs`;
 
   return (
@@ -139,15 +202,17 @@ Stok: ${stock} pcs`;
         <div className="mt-8 grid items-start gap-10 md:grid-cols-2">
           <div className="overflow-hidden rounded-[2rem] border border-zinc-200 bg-white shadow-sm">
             <div className="aspect-square bg-zinc-100">
-              {photos.length ? (
-                <img src={photos[Math.min(activePhoto, photos.length - 1)]} alt={`${currentProduct.title} ${activePhoto + 1}`} className="h-full w-full object-cover" />
+              {activeMediaItem ? (
+                activeMediaItem.type === "video" ? (
+                  <video src={activeMediaItem.url} poster={photos[0]} controls playsInline className="h-full w-full object-contain" />
+                ) : <img src={activeMediaItem.url} alt={`${currentProduct.title} ${activeMedia === -1 ? selectedOptions.find((item) => item.imageUrl)?.choiceLabel ?? "" : activeMedia + 1}`} className="h-full w-full object-cover" />
               ) : (
                 <div className="flex h-full items-center justify-center text-8xl">📦</div>
               )}
             </div>
-            {photos.length > 1 && <div className="flex gap-2 p-3">
-              {photos.map((photo, index) => <button key={photo} type="button" onClick={() => setActivePhoto(index)} aria-label={`Lihat foto ${index + 1}`} className={`h-16 w-16 overflow-hidden rounded-lg border-2 ${activePhoto === index ? "border-orange-500" : "border-transparent"}`}>
-                <img src={photo} alt={`${currentProduct.title} ${index + 1}`} className="h-full w-full object-cover" />
+            {media.length > 1 && <div className="flex gap-2 overflow-x-auto p-3">
+              {media.map((item, index) => <button key={`${item.url}-${index}`} type="button" onClick={() => setActiveMedia(index)} aria-label={item.type === "video" ? `Putar video ${index - photos.length + 1}` : `Lihat foto ${index + 1}`} className={`relative h-16 w-16 shrink-0 overflow-hidden rounded-lg border-2 ${activeMedia === index ? "border-orange-500" : "border-transparent"}`}>
+                {item.type === "video" ? <><video src={item.url} muted className="h-full w-full object-cover" /><span className="absolute inset-0 grid place-items-center bg-black/25 text-white">▶</span></> : <img src={item.url} alt={`${currentProduct.title} ${index + 1}`} className="h-full w-full object-cover" />}
               </button>)}
             </div>}
           </div>
@@ -163,19 +228,35 @@ Stok: ${stock} pcs`;
             </div>
 
             <h1 className="mt-5 text-4xl font-black tracking-tight md:text-5xl">{currentProduct.title}</h1>
-            <p className="mt-5 text-3xl font-black">{rupiah(Number(currentProduct.price))}</p>
+            <p className="mt-5 text-3xl font-black">{rupiah(variantPrice)}</p>
 
             <div className="my-8 h-px bg-zinc-200" />
 
             <h2 className="text-sm font-black uppercase tracking-[0.16em] text-zinc-400">
               Deskripsi Produk
             </h2>
-            <p className={`mt-3 whitespace-pre-line leading-7 text-zinc-600 ${descriptionExpanded ? "" : "line-clamp-2"}`}>
-              {currentProduct.description || "Produk 3D printing KEILAB."}
+<p className={`mt-3 whitespace-pre-line leading-7 text-zinc-600 ${descriptionExpanded ? "" : "line-clamp-2"}`}>
+              <DescriptionWithLinks text={currentProduct.description || "Produk 3D printing KEILAB."} />
             </p>
             {currentProduct.description && currentProduct.description.length > 100 && <button type="button" onClick={() => setDescriptionExpanded((expanded) => !expanded)} className="mt-2 text-sm font-bold text-orange-600 hover:text-orange-700">
               {descriptionExpanded ? "Tampilkan lebih sedikit" : "Baca selengkapnya"}
             </button>}
+
+            {groups.map((group) => (
+              <fieldset key={group.id} className="mt-6">
+                <legend className="text-sm font-black uppercase tracking-wide">{group.name}</legend>
+                <div className="mt-3 flex flex-wrap gap-2">
+                  {group.choices.map((choice) => {
+                    const selected = selectedChoices[group.id] === choice.label;
+                    const unavailable = typeof choice.stock === "number" && choice.stock <= 0;
+                    return <button key={choice.label} type="button" disabled={unavailable} onClick={() => { setSelectedChoices((current) => ({ ...current, [group.id]: choice.label })); setActiveMedia(choice.imageUrl ? -1 : 0); setQuantity(1); }} className={`flex min-w-[118px] items-center gap-2 rounded-xl border px-3 py-2.5 text-left text-sm font-bold transition ${selected ? "border-orange-500 bg-orange-50 text-orange-700 ring-2 ring-orange-100" : "border-zinc-200 hover:border-orange-300"} disabled:cursor-not-allowed disabled:opacity-40`}>
+                      {choice.imageUrl && <img src={choice.imageUrl} alt="" className="h-10 w-10 shrink-0 rounded-lg object-cover" />}
+                      <span><span className="block">{choice.label}</span><span className="mt-1 block text-[11px] font-semibold text-zinc-500">{group.priceMode === "set" ? rupiah(choice.price) : choice.price > 0 ? `+${rupiah(choice.price)}` : "Harga dasar"}{typeof choice.stock === "number" ? ` · Stok ${choice.stock}` : ""}</span></span>
+                    </button>;
+                  })}
+                </div>
+              </fieldset>
+            ))}
 
             {!outOfStock && (
               <div className="mt-8">
@@ -185,7 +266,7 @@ Stok: ${stock} pcs`;
                     −
                   </button>
                   <span className="min-w-12 text-center font-black">{quantity}</span>
-                  <button type="button" onClick={() => setQuantity((q) => Math.min(maxQty, q + 1))} className="px-5 py-3 font-black">
+              <button type="button" onClick={() => setQuantity((q) => Math.min(maxQty, q + 1))} disabled={quantity >= maxQty} className="px-5 py-3 font-black disabled:opacity-30">
                     +
                   </button>
                 </div>
@@ -209,6 +290,11 @@ Stok: ${stock} pcs`;
             >
               💬 Tanya via WhatsApp
             </a>
+            <div className="mt-3 grid grid-cols-2 gap-2">
+              <button type="button" onClick={shareProduct} className="rounded-xl border border-zinc-200 px-4 py-3 text-sm font-bold hover:bg-zinc-50">↗ Bagikan</button>
+              <button type="button" onClick={copyProductLink} className="rounded-xl border border-zinc-200 px-4 py-3 text-sm font-bold hover:bg-zinc-50">⧉ Salin link</button>
+            </div>
+            {shareMessage && <p role="status" className="mt-2 text-center text-xs font-semibold text-green-700">{shareMessage}</p>}
           </div>
         </div>
       </section>

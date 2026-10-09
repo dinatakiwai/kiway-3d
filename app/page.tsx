@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { useEffect, useState } from "react";
 import { supabase } from "@/lib/supabase";
+import { useStoreSettings } from "@/lib/useStoreSettings";
 
 type Product = {
   id: string;
@@ -23,6 +24,7 @@ function formatRupiah(value: number) {
   }).format(value);
 }
 export default function Home() {
+  const storeSettings = useStoreSettings();
   const [products, setProducts] = useState<Product[]>([]);
   const [productsLoading, setProductsLoading] = useState(true);
   const [productsError, setProductsError] = useState("");
@@ -297,6 +299,18 @@ export default function Home() {
           <p className="mx-auto mt-5 max-w-xl text-orange-100">
             Custom produk 3D kamu sendiri. Pilih warna, nama, dan desainnya.
           </p>
+
+          <div className="mt-7 flex flex-wrap justify-center gap-3">
+            {[
+              ["Instagram", storeSettings.instagramUrl],
+              ["TikTok", storeSettings.tiktokUrl],
+              ["Shopee", storeSettings.shopeeUrl],
+            ].filter(([, url]) => Boolean(url)).map(([label, url]) => (
+              <a key={label} href={url} target="_blank" rel="noreferrer" className="rounded-full border border-white/50 px-5 py-2.5 text-sm font-bold text-white transition hover:bg-white hover:text-orange-600">
+                {label} KEILAB ↗
+              </a>
+            ))}
+          </div>
 
           <Link
             href="/customizer"

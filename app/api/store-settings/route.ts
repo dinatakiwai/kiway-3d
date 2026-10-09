@@ -8,6 +8,9 @@ const defaultSettings = {
   baseColors: DEFAULT_BASE_COLORS,
   capColors: DEFAULT_CAP_COLORS,
   fontColors: DEFAULT_FONT_COLORS,
+  instagramUrl: "",
+  tiktokUrl: "",
+  shopeeUrl: "",
   clickerStartingPrice: 54000,
   pricePerExtraKeycap: 5000,
 };
@@ -39,7 +42,7 @@ function validColors(value: unknown): value is ClickerColor[] {
 
 export async function GET() {
   const { data, error } = await supabaseAdmin.from("store_settings")
-    .select("whatsapp,whatsapp_greeting,base_colors,cap_colors,font_colors,clicker_starting_price,price_per_extra_keycap")
+    .select("whatsapp,whatsapp_greeting,base_colors,cap_colors,font_colors,clicker_starting_price,price_per_extra_keycap,instagram_url,tiktok_url,shopee_url")
     .eq("id", "default").maybeSingle();
   if (error || !data) return NextResponse.json({ settings: defaultSettings });
   return NextResponse.json({ settings: {
@@ -48,6 +51,9 @@ export async function GET() {
     baseColors: Array.isArray(data.base_colors) && data.base_colors.length ? data.base_colors : DEFAULT_BASE_COLORS,
     capColors: Array.isArray(data.cap_colors) && data.cap_colors.length ? data.cap_colors : DEFAULT_CAP_COLORS,
     fontColors: Array.isArray(data.font_colors) && data.font_colors.length ? data.font_colors : DEFAULT_FONT_COLORS,
+    instagramUrl: data.instagram_url ?? "",
+    tiktokUrl: data.tiktok_url ?? "",
+    shopeeUrl: data.shopee_url ?? "",
     clickerStartingPrice: data.clicker_starting_price,
     pricePerExtraKeycap: data.price_per_extra_keycap,
   } });
@@ -64,9 +70,18 @@ export async function PUT(request: NextRequest) {
   const baseColors = body?.baseColors;
   const capColors = body?.capColors;
   const fontColors = body?.fontColors;
+  const socials = {
+    instagram_url: typeof body?.instagramUrl === "string" ? body.instagramUrl.trim() : "",
+    tiktok_url: typeof body?.tiktokUrl === "string" ? body.tiktokUrl.trim() : "",
+    shopee_url: typeof body?.shopeeUrl === "string" ? body.shopeeUrl.trim() : "",
+  };
+  const validUrl = (value: string) => {
+    if (!value) return true;
+    try { return ["http:", "https:"].includes(new URL(value).protocol); } catch { return false; }
+  };
 
-  if (whatsapp.length < 8 || whatsapp.length > 15 || !whatsappGreeting || whatsappGreeting.length > 500 || !validColors(baseColors) || !validColors(capColors) || !validColors(fontColors)) {
-    return NextResponse.json({ error: "Periksa nomor WhatsApp, pesan pembuka, dan daftar warna." }, { status: 400 });
+  if (whatsapp.length < 8 || whatsapp.length > 15 || !whatsappGreeting || whatsappGreeting.length > 500 || !validColors(baseColors) || !validColors(capColors) || !validColors(fontColors) || !Object.values(socials).every(validUrl)) {
+    return NextResponse.json({ error: "Periksa nomor WhatsApp, pesan pembuka, daftar warna, dan link sosial media (gunakan https://)." }, { status: 400 });
   }
 
   const { data, error } = await supabaseAdmin.from("store_settings").update({
@@ -75,11 +90,15 @@ export async function PUT(request: NextRequest) {
     base_colors: baseColors.map((color) => ({ name: color.name.trim(), value: color.value.toLowerCase() })),
     cap_colors: capColors.map((color) => ({ name: color.name.trim(), value: color.value.toLowerCase() })),
     font_colors: fontColors.map((color) => ({ name: color.name.trim(), value: color.value.toLowerCase() })),
+    ...socials,
     updated_at: new Date().toISOString(),
-  }).eq("id", "default").select("whatsapp,whatsapp_greeting,base_colors,cap_colors,font_colors").single();
+  }).eq("id", "default").select("whatsapp,whatsapp_greeting,base_colors,cap_colors,font_colors,instagram_url,tiktok_url,shopee_url").single();
 
   if (error || !data) {
-    return NextResponse.json({ error: "Pengaturan gagal disimpan. Pastikan SQL pengaturan toko sudah dijalankan di Supabase." }, { status: 500 });
+    const missingSocialColumns = error?.code === "42703" || /instagram_url|tiktok_url|shopee_url/i.test(error?.message ?? "");
+    return NextResponse.json({ error: missingSocialColumns
+      ? "Kolom media sosial belum tersedia. Jalankan migration 202610090001_product_options_video_socials.sql di Supabase SQL Editor, lalu coba simpan lagi."
+      : "Pengaturan gagal disimpan. Periksa koneksi dan migration pengaturan toko di Supabase." }, { status: 500 });
   }
 
   return NextResponse.json({ settings: {
@@ -88,5 +107,8 @@ export async function PUT(request: NextRequest) {
     baseColors: data.base_colors,
     capColors: data.cap_colors,
     fontColors: data.font_colors,
+    instagramUrl: data.instagram_url ?? "",
+    tiktokUrl: data.tiktok_url ?? "",
+    shopeeUrl: data.shopee_url ?? "",
   } });
 }

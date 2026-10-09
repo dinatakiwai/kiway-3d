@@ -75,6 +75,7 @@ export default function CartPage() {
                       <div>
                         <h2 className="font-black">{item.name}</h2>
                         {item.product === "clicker" && item.keychain && <p className="mt-1 text-xs font-semibold text-orange-600">Gantungan: {item.keychain.name}</p>}
+                        {item.product === "catalog" && item.selectedOptions?.filter((option) => option.choiceLabel).map((option) => <p key={option.groupName} className="mt-1 text-xs font-semibold text-zinc-500">{option.groupName}: {option.choiceLabel}</p>)}
                         <p className="mt-1 text-sm text-zinc-500">
                           {rupiah(item.price)}
                         </p>

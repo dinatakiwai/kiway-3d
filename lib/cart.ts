@@ -37,6 +37,7 @@ export type CatalogCartItem = ShippingPackageMeta & {
   price: number;
   quantity: number;
   imageUrl?: string | null;
+  selectedOptions?: { groupName: string; choiceLabel: string; price: number; priceMode: "add" | "set"; imageUrl?: string | null }[];
 };
 
 export type CartItem = ClickerCartItem | CatalogCartItem;
@@ -74,7 +75,7 @@ export function addToCart(
 
   const id =
     item.product === "catalog"
-      ? `catalog__${item.productId}`
+      ? `catalog__${item.productId}__${(item.selectedOptions ?? []).map((option) => `${option.groupName}:${option.choiceLabel}`).join("|")}`
       : [
           item.product,
           item.name,

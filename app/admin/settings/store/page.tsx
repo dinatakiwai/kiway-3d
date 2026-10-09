@@ -55,6 +55,9 @@ function PaletteEditor({
 export default function StoreSettingsPage() {
   const [whatsapp, setWhatsapp] = useState(STORE.whatsapp);
   const [greeting, setGreeting] = useState(STORE.whatsappGreeting);
+  const [instagramUrl, setInstagramUrl] = useState("");
+  const [tiktokUrl, setTiktokUrl] = useState("");
+  const [shopeeUrl, setShopeeUrl] = useState("");
   const [baseColors, setBaseColors] = useState<ClickerColor[]>(DEFAULT_BASE_COLORS);
   const [capColors, setCapColors] = useState<ClickerColor[]>(DEFAULT_CAP_COLORS);
   const [fontColors, setFontColors] = useState<ClickerColor[]>(DEFAULT_FONT_COLORS);
@@ -94,6 +97,9 @@ export default function StoreSettingsPage() {
         if (active && result.settings) {
           setWhatsapp(result.settings.whatsapp || STORE.whatsapp);
           setGreeting(result.settings.whatsappGreeting || STORE.whatsappGreeting);
+          setInstagramUrl(result.settings.instagramUrl || "");
+          setTiktokUrl(result.settings.tiktokUrl || "");
+          setShopeeUrl(result.settings.shopeeUrl || "");
           setBaseColors(result.settings.baseColors?.length ? result.settings.baseColors : DEFAULT_BASE_COLORS);
           setCapColors(result.settings.capColors?.length ? result.settings.capColors : DEFAULT_CAP_COLORS);
           setFontColors(result.settings.fontColors?.length ? result.settings.fontColors : DEFAULT_FONT_COLORS);
@@ -129,13 +135,16 @@ export default function StoreSettingsPage() {
           "Content-Type": "application/json",
           Authorization: `Bearer ${session.access_token}`,
         },
-        body: JSON.stringify({ whatsapp, whatsappGreeting: greeting, baseColors, capColors, fontColors }),
+        body: JSON.stringify({ whatsapp, whatsappGreeting: greeting, baseColors, capColors, fontColors, instagramUrl, tiktokUrl, shopeeUrl }),
       });
       const result = await response.json();
       if (!response.ok) throw new Error(result.error || "Pengaturan gagal disimpan.");
 
       setWhatsapp(result.settings.whatsapp);
       setGreeting(result.settings.whatsappGreeting);
+      setInstagramUrl(result.settings.instagramUrl || "");
+      setTiktokUrl(result.settings.tiktokUrl || "");
+      setShopeeUrl(result.settings.shopeeUrl || "");
       setBaseColors(result.settings.baseColors);
       setCapColors(result.settings.capColors);
       setFontColors(result.settings.fontColors);
@@ -178,6 +187,18 @@ export default function StoreSettingsPage() {
               <textarea id="greeting" value={greeting} onChange={(event) => setGreeting(event.target.value)} maxLength={500} rows={3} required className="mt-2 w-full resize-y rounded-xl border border-zinc-300 px-4 py-3 outline-none transition focus:border-orange-400 focus:ring-4 focus:ring-orange-100" />
               <p className="mt-2 text-xs text-zinc-500">Pesan ini menjadi pembuka chat dan otomatis diikuti rincian pesanan saat checkout.</p>
             </div>
+          </div>
+
+          <div className="space-y-5 rounded-2xl border border-zinc-200 bg-white p-5 shadow-sm md:p-8">
+            <div>
+              <h2 className="text-xl font-black text-zinc-950">Media Sosial KEILAB</h2>
+              <p className="mt-1 text-sm text-zinc-500">Isi link akun resmi. Tombolnya akan tampil di bagian Tentang website.</p>
+            </div>
+            {([["Instagram", instagramUrl, setInstagramUrl, "https://instagram.com/akun"], ["TikTok", tiktokUrl, setTiktokUrl, "https://tiktok.com/@akun"], ["Shopee", shopeeUrl, setShopeeUrl, "https://shopee.co.id/namatoko"]] as const).map(([label, value, setter, placeholder]) => (
+              <label key={label} className="block text-sm font-bold text-zinc-900">Link {label}
+                <input type="url" value={value} onChange={(event) => setter(event.target.value)} placeholder={placeholder} className="mt-2 w-full rounded-xl border border-zinc-300 px-4 py-3 font-normal outline-none transition focus:border-orange-400 focus:ring-4 focus:ring-orange-100" />
+              </label>
+            ))}
           </div>
 
 

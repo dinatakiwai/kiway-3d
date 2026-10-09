@@ -286,6 +286,9 @@ export default function CheckoutPage() {
               item.product === "clicker" && item.keychain
                 ? `Gantungan kunci: ${item.keychain.name} (+Rp${item.keychain.price.toLocaleString("id-ID")})`
                 : "",
+              item.product === "catalog" && item.selectedOptions?.length
+                ? `Pilihan produk: ${item.selectedOptions.filter((option) => option.choiceLabel).map((option) => `${option.groupName}: ${option.choiceLabel}${option.price ? option.priceMode === "set" ? ` (harga Rp${option.price.toLocaleString("id-ID")})` : ` (+Rp${option.price.toLocaleString("id-ID")})` : ""}`).join(", ")}`
+                : "",
             ].filter(Boolean).join("\n") || null,
             p_product: productType,
             p_custom_name: item.name,
@@ -840,6 +843,7 @@ export default function CheckoutPage() {
                       <p className="text-sm text-zinc-400">
                         {item.quantity} × {formatRupiah(item.price)}
                       </p>
+                      {item.product === "catalog" && item.selectedOptions?.filter((option) => option.choiceLabel).map((option) => <p key={option.groupName} className="text-xs text-zinc-500">{option.groupName}: {option.choiceLabel}</p>)}
                     </div>
 
                     <p className="font-bold">

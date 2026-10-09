@@ -8,6 +8,8 @@ type Product = {
   title: string;
   image_url: string | null;
   image_urls?: string[] | null;
+  video_urls?: string[] | null;
+  option_groups?: ProductOptionGroup[] | null;
   price: number;
   stock: number;
   category: string;
@@ -16,6 +18,11 @@ type Product = {
   inventory_id: string | null;
   created_at: string;
 };
+
+type ProductOptionChoice = { label: string; price: number; stock: number | null; imageUrl?: string | null };
+type ProductOptionGroup = { id: string; name: string; priceMode?: "add" | "set"; choices: ProductOptionChoice[] };
+type AdminOptionChoice = ProductOptionChoice & { imageFile?: File };
+type AdminOptionGroup = Omit<ProductOptionGroup, "choices"> & { priceMode: "add" | "set"; choices: AdminOptionChoice[] };
 
 type InventoryItem = {
   id: string;
@@ -49,6 +56,9 @@ export default function AdminCatalogPage() {
   const [saving, setSaving] = useState(false);
   const [form, setForm] = useState(emptyForm);
   const [photos, setPhotos] = useState<{ url: string; file?: File }[]>([]);
+  const [videos, setVideos] = useState<{ url: string; file?: File }[]>([]);
+  const [optionGroups, setOptionGroups] = useState<AdminOptionGroup[]>([]);
+  const [newGroupName, setNewGroupName] = useState("");
   const [editing, setEditing] = useState<Product | null>(null);
   const [message, setMessage] = useState("");
   const [error, setError] = useState("");
@@ -105,8 +115,13 @@ export default function AdminCatalogPage() {
 
   function resetForm() {
     photos.forEach((photo) => { if (photo.file) URL.revokeObjectURL(photo.url); });
+    videos.forEach((video) => { if (video.file) URL.revokeObjectURL(video.url); });
+    optionGroups.forEach((group) => group.choices.forEach((choice) => { if (choice.imageFile && choice.imageUrl) URL.revokeObjectURL(choice.imageUrl); }));
     setForm(emptyForm);
     setPhotos([]);
+    setVideos([]);
+    setOptionGroups([]);
+    setNewGroupName("");
     setEditing(null);
     setMessage("");
     setError("");
@@ -123,6 +138,13 @@ export default function AdminCatalogPage() {
       inventory_id: product.inventory_id ?? "",
     });
     setPhotos((product.image_urls?.length ? product.image_urls : product.image_url ? [product.image_url] : []).slice(0, 4).map((url) => ({ url })));
+    setVideos((product.video_urls ?? []).slice(0, 4).map((url) => ({ url })));
+    setOptionGroups((product.option_groups ?? []).map((group) => ({
+      ...group,
+      id: group.id || crypto.randomUUID(),
+      priceMode: group.priceMode === "set" ? "set" : "add",
+      choices: Array.isArray(group.choices) ? group.choices : [],
+    })));
     setMessage("");
     setError("");
     window.scrollTo({ top: 0, behavior: "smooth" });
@@ -144,7 +166,22 @@ export default function AdminCatalogPage() {
     });
   }
 
-  async function uploadImage(nextFile: File) {
+  function handleVideoChange(selected: FileList | null) {
+    if (!selected) return;
+    const picked = Array.from(selected).filter((file) => file.type.startsWith("video/"));
+    const slots = Math.max(4 - videos.length, 0);
+    if (picked.length > slots) setError(`Maksimal 4 video. Kamu masih bisa menambah ${slots} video.`);
+    if (picked.some((file) => file.size > 50 * 1024 * 1024)) {
+      setError("Ukuran setiap video maksimal 50 MB.");
+    }
+    setVideos((current) => [...current, ...picked.filter((file) => file.size <= 50 * 1024 * 1024).slice(0, slots).map((file) => ({ file, url: URL.createObjectURL(file) }))]);
+  }
+
+  function updateOptionGroup(groupId: string, update: (group: AdminOptionGroup) => AdminOptionGroup) {
+    setOptionGroups((groups) => groups.map((group) => group.id === groupId ? update(group) : group));
+  }
+
+  async function uploadAsset(nextFile: File) {
     const extension =
       nextFile.name.split(".").pop()?.toLowerCase() || "jpg";
 
@@ -189,12 +226,28 @@ export default function AdminCatalogPage() {
       }
 
       if (photos.length > 4 || photos.some((photo) => photo.file && !photo.file.type.startsWith("image/"))) throw new Error("Pilih maksimal 4 file foto.");
-      const savedImageUrls = await Promise.all(photos.map((photo) => photo.file ? uploadImage(photo.file) : Promise.resolve(photo.url)));
+      if (videos.length > 4 || videos.some((video) => video.file && (!video.file.type.startsWith("video/") || video.file.size > 50 * 1024 * 1024))) throw new Error("Pilih maksimal 4 video dengan ukuran maksimal 50 MB per video.");
+      if (optionGroups.filter((group) => group.priceMode === "set").length > 1) throw new Error("Gunakan maksimal satu menu untuk menetapkan harga akhir, misalnya menu HURUF.");
+      if (optionGroups.some((group) => !group.name.trim() || group.choices.length === 0 || group.choices.some((choice) => !choice.label.trim() || !Number.isFinite(choice.price) || choice.price < 0 || (choice.stock !== null && choice.stock !== undefined && (!Number.isFinite(choice.stock) || choice.stock < 0)) || (choice.imageFile && (!choice.imageFile.type.startsWith("image/") || choice.imageFile.size > 10 * 1024 * 1024))))) throw new Error("Lengkapi nama menu, pilihan, harga, dan stok. Gambar pilihan maksimal 10 MB.");
+      const savedImageUrls = await Promise.all(photos.map((photo) => photo.file ? uploadAsset(photo.file) : Promise.resolve(photo.url)));
+      const savedVideoUrls = await Promise.all(videos.map((video) => video.file ? uploadAsset(video.file) : Promise.resolve(video.url)));
 
       const payload = {
         title,
         image_url: savedImageUrls[0] ?? null,
         image_urls: savedImageUrls,
+        video_urls: savedVideoUrls,
+        option_groups: await Promise.all(optionGroups.map(async (group) => ({
+          id: group.id,
+          name: group.name.trim(),
+          priceMode: group.priceMode,
+          choices: await Promise.all(group.choices.map(async (choice) => ({
+            label: choice.label.trim(),
+            price: Number(choice.price),
+            stock: choice.stock == null ? null : Number(choice.stock),
+            imageUrl: choice.imageFile ? await uploadAsset(choice.imageFile) : choice.imageUrl ?? null,
+          }))),
+        }))),
         price,
         stock: manualStock,
         category: form.category.trim() || "Lainnya",
@@ -357,6 +410,21 @@ export default function AdminCatalogPage() {
                 </label>}
               </div>
               <p className="mt-2 text-xs text-neutral-500">Maksimal 4 foto. Foto pertama menjadi foto utama.</p>
+              <label className="mb-2 mt-6 block text-sm font-semibold">Video Produk</label>
+              <div className="grid grid-cols-2 gap-2">
+                {videos.map((video, index) => (
+                  <div key={`${video.url}-${index}`} className="relative aspect-video overflow-hidden rounded-xl bg-neutral-900">
+                    <video src={video.url} muted playsInline className="h-full w-full object-cover" />
+                    <button type="button" onClick={() => setVideos((current) => { const item = current[index]; if (item?.file) URL.revokeObjectURL(item.url); return current.filter((_, i) => i !== index); })} aria-label={`Hapus video ${index + 1}`} className="absolute right-2 top-2 rounded-full bg-black/75 px-2.5 py-1 text-xs font-bold text-white">✕</button>
+                    <span className="absolute bottom-2 left-2 rounded-full bg-black/70 px-2 py-1 text-[10px] font-bold text-white">▶ Video {index + 1}</span>
+                  </div>
+                ))}
+                {videos.length < 4 && <label className="flex aspect-video cursor-pointer flex-col items-center justify-center rounded-xl border-2 border-dashed border-neutral-300 bg-neutral-50 text-center hover:border-orange-400">
+                  <span className="text-3xl">🎬</span><span className="mt-1 px-2 text-sm font-semibold">Tambah Video</span><span className="mt-1 text-xs text-neutral-500">{videos.length}/4 · maks 50 MB</span>
+                  <input type="file" accept="video/mp4,video/webm,video/quicktime" multiple className="hidden" onChange={(event) => { handleVideoChange(event.target.files); event.target.value = ""; }} />
+                </label>}
+              </div>
+              <p className="mt-2 text-xs text-neutral-500">Maksimal 4 video. Format MP4/WebM lebih disarankan.</p>
             </div>
 
             <div className="grid gap-5 md:grid-cols-2">
@@ -465,6 +533,53 @@ export default function AdminCatalogPage() {
                   className="w-full rounded-xl border border-neutral-300 px-4 py-3 outline-none focus:border-orange-500"
                 />
                 <p className="mt-2 text-xs text-neutral-500">Agar foto dan harga produk muncul di customizer clicker, gunakan kategori “Gantungan Kunci”, isi stok lebih dari 0, dan pastikan produk aktif.</p>
+              </div>
+
+              <div className="md:col-span-2 rounded-2xl border border-neutral-200 p-4 md:p-5">
+                <div className="flex flex-col gap-3 sm:flex-row sm:items-end">
+                  <label className="flex-1 text-sm font-semibold">Nama menu pilihan
+                    <input value={newGroupName} onChange={(event) => setNewGroupName(event.target.value)} maxLength={40} placeholder="Contoh: WARNA atau JUMLAH HURUF" className="mt-2 w-full rounded-xl border border-neutral-300 px-4 py-3 font-normal outline-none focus:border-orange-500" />
+                  </label>
+                  <button type="button" disabled={!newGroupName.trim()} onClick={() => { setOptionGroups((groups) => [...groups, { id: crypto.randomUUID(), name: newGroupName.trim(), priceMode: "add", choices: [] }]); setNewGroupName(""); }} className="rounded-xl bg-zinc-900 px-4 py-3 text-sm font-bold text-white disabled:opacity-40">+ Tambah menu</button>
+                </div>
+                <p className="mt-2 text-xs text-neutral-500">Buat menu seperti WARNA dan JUMLAH HURUF, lalu masukkan pilihan, tambahan harga, dan stok tiap pilihan.</p>
+                <div className="mt-4 space-y-4">
+                  {optionGroups.map((group) => (
+                    <div key={group.id} className="rounded-xl bg-neutral-50 p-4">
+                      <div className="flex items-center gap-2">
+                        <input value={group.name} maxLength={40} onChange={(event) => updateOptionGroup(group.id, (item) => ({ ...item, name: event.target.value }))} aria-label="Nama menu pilihan" className="min-w-0 flex-1 rounded-lg border border-neutral-300 bg-white px-3 py-2 font-bold" />
+                        <select value={group.priceMode} onChange={(event) => updateOptionGroup(group.id, (item) => ({ ...item, priceMode: event.target.value as "add" | "set" }))} aria-label="Aturan harga menu" className="rounded-lg border border-neutral-300 bg-white px-2 py-2 text-xs font-bold">
+                          <option value="add">Harga tambahan</option>
+                          <option value="set">Harga akhir</option>
+                        </select>
+                        <button type="button" onClick={() => setOptionGroups((groups) => groups.filter((item) => item.id !== group.id))} className="rounded-lg px-3 py-2 text-sm font-bold text-red-600 hover:bg-red-50">Hapus menu</button>
+                      </div>
+                      <p className="mt-2 text-xs text-neutral-500">{group.priceMode === "set" ? "Pilih salah satu harga akhir untuk menu ini. Cocok untuk jumlah huruf." : "Nilai pilihan ditambahkan ke harga produk. Cocok untuk warna yang gratis atau punya biaya tambahan."}</p>
+                      <div className="mt-3 space-y-2">
+                        {group.choices.map((choice, index) => (
+                          <div key={`${group.id}-${index}`} className="grid gap-2 sm:grid-cols-[minmax(150px,1fr)_1fr_130px_120px_auto]">
+                            <div className="flex min-w-0 items-center gap-2 rounded-lg border border-neutral-300 bg-white p-1.5">
+                              {choice.imageUrl ? <img src={choice.imageUrl} alt={`Gambar ${choice.label || "pilihan"}`} className="h-12 w-12 shrink-0 rounded-md object-cover" /> : <span className="grid h-12 w-12 shrink-0 place-items-center rounded-md bg-neutral-100 text-xl">🎨</span>}
+                              <label className="min-w-0 flex-1 cursor-pointer text-xs font-bold text-orange-700">{choice.imageUrl ? "Ganti gambar" : "Tambah gambar"}
+                                <input type="file" accept="image/*" className="hidden" onChange={(event) => { const file = event.target.files?.[0]; if (!file) return; const preview = URL.createObjectURL(file); updateOptionGroup(group.id, (item) => ({ ...item, choices: item.choices.map((value, i) => { if (i !== index) return value; if (value.imageFile && value.imageUrl) URL.revokeObjectURL(value.imageUrl); return { ...value, imageUrl: preview, imageFile: file }; }) })); event.target.value = ""; }} />
+                              </label>
+                              {choice.imageUrl && <button type="button" aria-label="Hapus gambar pilihan" onClick={() => { if (choice.imageFile) URL.revokeObjectURL(choice.imageUrl!); updateOptionGroup(group.id, (item) => ({ ...item, choices: item.choices.map((value, i) => i === index ? { ...value, imageUrl: null, imageFile: undefined } : value) })); }} className="px-1 text-xs text-red-600">✕</button>}
+                            </div>
+                            <input value={choice.label} maxLength={50} onChange={(event) => updateOptionGroup(group.id, (item) => ({ ...item, choices: item.choices.map((value, i) => i === index ? { ...value, label: event.target.value } : value) }))} placeholder="Nama pilihan" aria-label="Nama pilihan variasi" className="min-w-0 rounded-lg border border-neutral-300 bg-white px-3 py-2 text-sm" />
+                            <label className="text-[11px] font-semibold text-neutral-500">{group.priceMode === "set" ? "Harga jual" : "Harga tambahan"}
+                              <input type="number" min="0" value={choice.price} onChange={(event) => updateOptionGroup(group.id, (item) => ({ ...item, choices: item.choices.map((value, i) => i === index ? { ...value, price: Number(event.target.value) } : value) }))} className="mt-1 w-full rounded-lg border border-neutral-300 bg-white px-3 py-2 text-sm text-neutral-900" />
+                            </label>
+                            <label className="text-[11px] font-semibold text-neutral-500">Stok (kosong = ikut stok produk)
+                              <input type="number" min="0" value={choice.stock ?? ""} onChange={(event) => updateOptionGroup(group.id, (item) => ({ ...item, choices: item.choices.map((value, i) => i === index ? { ...value, stock: event.target.value === "" ? null : Number(event.target.value) } : value) }))} className="mt-1 w-full rounded-lg border border-neutral-300 bg-white px-3 py-2 text-sm text-neutral-900" />
+                            </label>
+                            <button type="button" onClick={() => updateOptionGroup(group.id, (item) => ({ ...item, choices: item.choices.filter((_, i) => i !== index) }))} className="self-end rounded-lg px-3 py-2 text-sm font-bold text-red-600">Hapus</button>
+                          </div>
+                        ))}
+                      </div>
+                      <button type="button" onClick={() => updateOptionGroup(group.id, (item) => ({ ...item, choices: [...item.choices, { label: "", price: 0, stock: null }] }))} className="mt-3 rounded-lg border border-neutral-300 bg-white px-3 py-2 text-sm font-bold hover:border-orange-400">+ Tambah pilihan</button>
+                    </div>
+                  ))}
+                </div>
               </div>
 
               <div className="md:col-span-2">
