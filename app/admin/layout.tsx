@@ -9,7 +9,7 @@ export default function AdminLayout({
     <div className="min-h-screen bg-gray-50">
       <AdminSidebar />
 
-      <main className="min-h-screen pl-64">
+      <main className="min-h-screen overflow-x-hidden pt-16 md:pl-64 md:pt-0">
         {children}
       </main>
     </div>

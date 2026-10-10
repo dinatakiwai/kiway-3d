@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import { useState } from "react";
 
 const menu = [
   { title: "Dashboard", href: "/admin/overview", icon: "📊" },
@@ -20,9 +21,21 @@ const menu = [
 
 export default function AdminSidebar() {
   const pathname = usePathname();
+  const [open, setOpen] = useState(false);
 
   return (
-    <aside className="fixed left-0 top-0 z-50 flex h-screen w-64 flex-col border-r bg-white">
+    <>
+      <button
+        type="button"
+        aria-label={open ? "Tutup menu admin" : "Buka menu admin"}
+        aria-expanded={open}
+        onClick={() => setOpen((value) => !value)}
+        className="fixed left-4 top-4 z-[60] rounded-lg border border-zinc-300 bg-white px-3 py-2 text-sm font-bold text-zinc-900 shadow md:hidden"
+      >
+        {open ? "✕ Tutup" : "☰ Menu"}
+      </button>
+      {open && <button aria-label="Tutup menu" onClick={() => setOpen(false)} className="fixed inset-0 z-40 bg-black/40 md:hidden" />}
+      <aside className={`fixed left-0 top-0 z-50 flex h-screen w-64 max-w-[85vw] flex-col border-r bg-white transition-transform duration-200 md:translate-x-0 ${open ? "translate-x-0" : "-translate-x-full"}`}>
       <div className="border-b px-6 py-5">
         <div className="flex h-10 w-[150px] items-center">
           <img
@@ -51,6 +64,7 @@ export default function AdminSidebar() {
             <Link
               key={item.href}
               href={item.href}
+              onClick={() => setOpen(false)}
               className={`flex items-center gap-3 rounded-xl px-4 py-3 text-sm font-semibold transition ${
                 active
                   ? "bg-black text-white shadow-sm"
@@ -67,6 +81,7 @@ export default function AdminSidebar() {
       <div className="border-t p-4">
         <Link
           href="/"
+          onClick={() => setOpen(false)}
           className="flex items-center gap-3 rounded-xl px-4 py-3 text-sm font-semibold text-gray-600 hover:bg-gray-100 hover:text-black"
         >
           <span>🏠</span>
@@ -80,6 +95,7 @@ export default function AdminSidebar() {
           </div>
         </div>
       </div>
-    </aside>
+      </aside>
+    </>
   );
 }

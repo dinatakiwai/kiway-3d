@@ -252,7 +252,7 @@ Stok: ${stock} pcs`;
                     const unavailable = typeof choice.stock === "number" && choice.stock <= 0;
                     return <button key={choice.label} type="button" disabled={unavailable} onClick={() => { setSelectedChoices((current) => ({ ...current, [group.id]: choice.label })); setActiveMedia(choice.imageUrl ? -1 : 0); setQuantity(1); }} className={`flex min-w-[118px] items-center gap-2 rounded-xl border px-3 py-2.5 text-left text-sm font-bold transition ${selected ? "border-orange-500 bg-orange-50 text-orange-700 ring-2 ring-orange-100" : "border-zinc-200 hover:border-orange-300"} disabled:cursor-not-allowed disabled:opacity-40`}>
                       {choice.imageUrl && <img src={choice.imageUrl} alt="" className="h-10 w-10 shrink-0 rounded-lg object-cover" />}
-                      <span><span className="block">{choice.label}</span><span className="mt-1 block text-[11px] font-semibold text-zinc-500">{group.priceMode === "set" ? rupiah(choice.price) : choice.price > 0 ? `+${rupiah(choice.price)}` : "Harga dasar"}{typeof choice.stock === "number" ? ` · Stok ${choice.stock}` : ""}</span></span>
+                      <span>{choice.label}</span>
                     </button>;
                   })}
                 </div>

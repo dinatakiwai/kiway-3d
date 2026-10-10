@@ -5,6 +5,7 @@ import dynamic from "next/dynamic";
 import { useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import { supabase } from "@/lib/supabase";
+import VisitorChart from "@/components/VisitorChart";
 
 const Clicker3D = dynamic(() => import("@/components/Clicker3D"), {
   ssr: false,
@@ -200,9 +201,18 @@ export default function AdminPage() {
   }
 
   function openOrder(order: Order) {
-    setSelectedOrder(order);
-    setDraftPaymentStatus(order.payment_status);
-    setDraftProductionStatus(order.production_status);
+    const safeOrder = {
+      ...order,
+      letters: Array.isArray(order.letters) ? order.letters : [],
+      letter_colors: order.letter_colors && typeof order.letter_colors === "object" ? order.letter_colors : {},
+      base_color: order.base_color || "#ffffff",
+      customer_name: order.customer_name || "Customer",
+      custom_name: order.custom_name || order.product || "Pesanan",
+      quantity: Number(order.quantity) || 1,
+    };
+    setSelectedOrder(safeOrder);
+    setDraftPaymentStatus(safeOrder.payment_status);
+    setDraftProductionStatus(safeOrder.production_status);
   }
 
   function openWhatsApp(order: Order) {
@@ -594,6 +604,7 @@ export default function AdminPage() {
 
                         <td className="px-5 py-5 text-right">
                           <button
+                            type="button"
                             onClick={() =>
                               openOrder(order)
                             }
@@ -617,9 +628,11 @@ export default function AdminPage() {
         </section>
       </div>
 
+      <VisitorChart />
+
       {/* DETAIL MODAL */}
       {selectedOrder && (
-        <div className="fixed inset-0 z-[100] overflow-y-auto bg-black/50 p-4">
+        <div role="dialog" aria-modal="true" aria-label="Detail pesanan" className="fixed inset-0 z-[100] overflow-y-auto bg-black/50 p-4">
           <div className="mx-auto my-6 w-full max-w-6xl rounded-3xl bg-white p-5 shadow-2xl md:p-8">
             {/* MODAL HEADER */}
             <div className="flex items-start justify-between gap-5">

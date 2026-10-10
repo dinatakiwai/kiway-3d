@@ -96,9 +96,10 @@ export async function PUT(request: NextRequest) {
   }, { onConflict: "id" }).select("whatsapp,whatsapp_greeting,base_colors,cap_colors,font_colors,instagram_url,tiktok_url,shopee_url").single();
 
   if (error || !data) {
-    const missingSocialColumns = error?.code === "42703" || error?.code === "PGRST204" || /instagram_url|tiktok_url|shopee_url/i.test(error?.message ?? "");
-    return NextResponse.json({ error: missingSocialColumns
-      ? "Kolom media sosial belum tersedia. Jalankan migration 202610090001_product_options_video_socials.sql di Supabase SQL Editor, lalu coba simpan lagi."
+    console.error("Store settings save failed", { code: error?.code, message: error?.message, hint: error?.hint });
+    const schemaCacheIssue = error?.code === "42703" || error?.code === "PGRST204" || error?.code === "PGRST200";
+    return NextResponse.json({ error: schemaCacheIssue
+      ? "Kolom pengaturan toko belum lengkap atau belum terbaca Supabase. Jalankan ulang migration 202610100001_catalog_discounts.sql di project yang sama, lalu refresh schema."
       : "Pengaturan gagal disimpan. Periksa koneksi dan migration pengaturan toko di Supabase." }, { status: 500 });
   }
 
