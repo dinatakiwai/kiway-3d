@@ -19,7 +19,8 @@ const ProductPreview3D = dynamic(
 );
 
 export default function ClickerProductPage() {
-  const { clickerStartingPrice } = useStoreSettings();
+  const { clickerStartingPrice, classicClickerEnabled } = useStoreSettings();
+  if (!classicClickerEnabled) return <main className="grid min-h-[60vh] place-items-center px-5 text-center"><div><h1 className="text-3xl font-black">Custom clicker sedang tidak tersedia</h1><p className="mt-2 text-zinc-500">Fitur ini sementara dinonaktifkan oleh toko.</p><Link href="/" className="mt-5 inline-block font-bold text-orange-600">Kembali ke toko</Link></div></main>;
   return (
     <main className="min-h-screen bg-zinc-50 px-5 py-10 md:px-8 md:py-14">
       <div className="mx-auto max-w-6xl">

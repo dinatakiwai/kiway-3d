@@ -614,21 +614,17 @@ export default function ProductionPage() {
     }
   }
 
-  function sendWhatsApp(order: Order) {
+  function whatsappHref(order: Order) {
     const phone = String(order.customer_phone || "").replace(/\D/g, "");
     if (!phone) {
-      setError("Nomor WhatsApp customer tidak tersedia.");
-      return;
+      return undefined;
     }
 
     const message = `Halo ${order.customer_name || ""}, pesanan ${
       order.order_code || order.id
     } dari KEILAB sedang ${statusLabel(order.production_status)}.`;
 
-    window.open(
-      `https://wa.me/${phone}?text=${encodeURIComponent(message)}`,
-      "_blank"
-    );
+    return `https://wa.me/${phone}?text=${encodeURIComponent(message)}`;
   }
 
   if (loading) {
@@ -767,13 +763,16 @@ export default function ProductionPage() {
                           🏭 Catat Produksi
                         </button>
 
-                        <button
-                          onClick={() => sendWhatsApp(order)}
-                          className="rounded-xl border border-zinc-200 px-3 py-2.5 text-xs font-bold hover:bg-zinc-50"
+                        <a
+                          href={whatsappHref(order)}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          aria-disabled={!whatsappHref(order)}
+                          className="rounded-xl border border-zinc-200 px-3 py-2.5 text-center text-xs font-bold hover:bg-zinc-50"
                           title="WhatsApp Customer"
                         >
                           WhatsApp
-                        </button>
+                        </a>
                       </div>
 
                       <select

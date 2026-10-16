@@ -15,6 +15,8 @@ export type StoreSettings = {
   shopeeUrl: string;
   clickerStartingPrice: number;
   pricePerExtraKeycap: number;
+  classicClickerEnabled: boolean;
+  imageClickerEnabled: boolean;
 };
 
 const SETTINGS_CHANGED_EVENT = "keilab-store-settings-updated";
@@ -29,6 +31,8 @@ const defaultSettings: StoreSettings = {
   shopeeUrl: "",
   clickerStartingPrice: DEFAULT_CLICKER_STARTING_PRICE,
   pricePerExtraKeycap: DEFAULT_PRICE_PER_EXTRA_KEYCAP,
+  classicClickerEnabled: true,
+  imageClickerEnabled: true,
 };
 
 export function useStoreSettings() {

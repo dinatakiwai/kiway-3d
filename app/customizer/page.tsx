@@ -28,7 +28,7 @@ const Clicker3D = dynamic(() => import("@/components/Clicker3D"), {
 
 export default function CustomizerPage() {
   const router = useRouter();
-  const { baseColors, capColors: availableCapColors, fontColors: availableFontColors, clickerStartingPrice, pricePerExtraKeycap } = useStoreSettings();
+  const { baseColors, capColors: availableCapColors, fontColors: availableFontColors, clickerStartingPrice, pricePerExtraKeycap, classicClickerEnabled, imageClickerEnabled } = useStoreSettings();
 
   const [name, setName] = useState("RAHMA");
   const [baseColor, setBaseColor] = useState("#ffffff");
@@ -85,6 +85,7 @@ export default function CustomizerPage() {
   );
 
   const letters = cleanName.replace(/ /g, "").split("");
+  if (!classicClickerEnabled) return <main className="grid min-h-[60vh] place-items-center px-5 text-center"><div><h1 className="text-3xl font-black">Customizer sedang tidak tersedia</h1><p className="mt-2 text-zinc-500">Fitur ini sementara dinonaktifkan oleh toko.</p><Link href="/" className="mt-5 inline-block font-bold text-orange-600">Kembali ke toko</Link></div></main>;
   const unitPrice = getClickerPrice(letters.length, clickerStartingPrice, pricePerExtraKeycap);
   const unitTotal = unitPrice + (selectedKeychain?.price ?? 0);
   const orderTotal = unitTotal * quantity;
@@ -140,6 +141,9 @@ export default function CustomizerPage() {
             <p className="text-xl font-black">Rp{clickerStartingPrice.toLocaleString("id-ID")}</p>
           </div>
         </div>
+        {imageClickerEnabled && <Link href="/customizer/image" className="mt-5 inline-flex rounded-full border border-orange-200 bg-orange-50 px-4 py-2.5 text-sm font-bold text-orange-700 transition hover:bg-orange-100">
+          Buat clicker dari gambar →
+        </Link>}
       </section>
 
       <section className="mx-auto max-w-7xl px-5 pb-20 md:px-6">

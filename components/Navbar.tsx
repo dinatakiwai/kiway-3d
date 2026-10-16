@@ -119,6 +119,13 @@ export default function Navbar() {
             >
               Lacak Pesanan
             </Link>
+
+            <Link
+              href="/cek-ongkir"
+              className="text-sm font-semibold text-zinc-700 hover:text-orange-500"
+            >
+              Cek Ongkir
+            </Link>
           </nav>
 
           <div className="flex items-center gap-2 sm:gap-3">

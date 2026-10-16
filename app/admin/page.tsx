@@ -29,6 +29,16 @@ type Order = {
   quantity: number;
   price: number;
   total: number;
+  shipping_cost?: number | null;
+  shipping_recipient_name?: string | null;
+  shipping_phone?: string | null;
+  shipping_address?: string | null;
+  shipping_province?: string | null;
+  shipping_city?: string | null;
+  shipping_district?: string | null;
+  shipping_postal_code?: string | null;
+  shipping_courier?: string | null;
+  shipping_service?: string | null;
   payment_status: string;
   production_status: string;
   created_at: string;
@@ -40,6 +50,24 @@ type ProductionFilter =
   | "processing"
   | "finished"
   | "shipped";
+
+type ClickerDesignFiles = { source: string | null; model: string | null };
+
+function designIdFromNotes(notes: string | null) {
+  return notes?.match(/CLICKER_DESIGN:([0-9a-f-]{36}):(relief|silhouette)/i)?.[1] ?? null;
+}
+
+function designSettingsFromNotes(notes: string | null): Record<string, unknown> | null {
+  const encoded = notes?.match(/CLICKER_SETTINGS:([^\r\n]+)/i)?.[1];
+  if (!encoded) return null;
+  try { return JSON.parse(decodeURIComponent(encoded)) as Record<string, unknown>; } catch { return null; }
+}
+
+function imageFromNotes(notes: string | null) {
+  const value = notes?.match(/ITEM_IMAGE:([^\r\n]+)/i)?.[1];
+  if (!value) return null;
+  try { return decodeURIComponent(value); } catch { return null; }
+}
 
 const rupiah = (n: number) =>
   new Intl.NumberFormat("id-ID", {
@@ -107,6 +135,9 @@ export default function AdminPage() {
   const [draftProductionStatus, setDraftProductionStatus] = useState("");
   const [saving, setSaving] = useState(false);
   const [updating, setUpdating] = useState(false);
+  const [designFiles, setDesignFiles] = useState<ClickerDesignFiles | null>(null);
+  const [loadingDesign, setLoadingDesign] = useState(false);
+  const [productPreviewImage, setProductPreviewImage] = useState<string | null>(null);
 
   const [search, setSearch] = useState("");
   const [filter, setFilter] = useState<ProductionFilter>("all");
@@ -211,35 +242,34 @@ export default function AdminPage() {
       quantity: Number(order.quantity) || 1,
     };
     setSelectedOrder(safeOrder);
+    setDesignFiles(null);
+    setProductPreviewImage(imageFromNotes(order.notes));
+    if (!imageFromNotes(order.notes) && String(order.product).toLowerCase() === "catalog" && order.custom_name) {
+      void supabase.from("products").select("image_url").eq("title", order.custom_name).maybeSingle()
+        .then(({ data }) => setProductPreviewImage(data?.image_url ?? null));
+    }
+    const designId = designIdFromNotes(order.notes);
+    if (designId) {
+      setLoadingDesign(true);
+      void (async () => {
+        const { data: { session } } = await supabase.auth.getSession();
+        const response = await fetch(`/api/admin/clicker-designs?id=${designId}`, {
+          headers: session?.access_token ? { Authorization: `Bearer ${session.access_token}` } : {},
+        });
+        const result = response.ok ? await response.json() : null;
+        setDesignFiles(result);
+        setLoadingDesign(false);
+      })();
+    }
     setDraftPaymentStatus(safeOrder.payment_status);
     setDraftProductionStatus(safeOrder.production_status);
   }
 
-  function openWhatsApp(order: Order) {
+  function whatsappHref(order: Order) {
     const phone = normalizePhone(order.customer_phone);
-
-    if (!phone) {
-      alert("Nomor WhatsApp customer belum tersedia.");
-      return;
-    }
-
-    const message = [
-      `Halo ${order.customer_name} 👋`,
-      "",
-      "Kami dari KEILAB.ID.",
-      `Terkait pesanan custom *${order.custom_name}*,`,
-      `status produksi saat ini: *${productionLabel(
-        order.production_status
-      )}*.`,
-      "",
-      "Terima kasih 🙏",
-    ].join("\n");
-
-    window.open(
-      `https://wa.me/${phone}?text=${encodeURIComponent(message)}`,
-      "_blank",
-      "noopener,noreferrer"
-    );
+    if (!phone) return null;
+    const message = [`Halo ${order.customer_name} 👋`, "", "Kami dari KEILAB.ID.", `Terkait pesanan custom *${order.custom_name}*,`, `status produksi saat ini: *${productionLabel(order.production_status)}*.`, "", "Terima kasih 🙏"].join("\n");
+    return `https://wa.me/${phone}?text=${encodeURIComponent(message)}`;
   }
 
   async function logout() {
@@ -666,7 +696,7 @@ export default function AdminPage() {
                   <div className="flex items-center justify-between gap-4">
                     <div>
                       <h3 className="font-black">
-                        Preview 3D Pesanan
+                        {designIdFromNotes(selectedOrder.notes) ? "Desain Gambar Pesanan" : "Preview 3D Pesanan"}
                       </h3>
 
                       <p className="mt-1 text-xs text-zinc-500">
@@ -675,20 +705,28 @@ export default function AdminPage() {
                     </div>
 
                     <span className="rounded-full bg-zinc-100 px-3 py-1.5 text-xs font-bold">
-                      {selectedOrder.letters.length} huruf
+                      {designIdFromNotes(selectedOrder.notes) ? "Desain gambar" : `${selectedOrder.letters.length} huruf`}
                     </span>
                   </div>
                 </div>
 
                 <div className="h-[430px]">
-                  <Clicker3D
+                  {designIdFromNotes(selectedOrder.notes) ? (
+                    <div className="flex h-full flex-col items-center justify-center gap-4 bg-white p-5">
+                      {loadingDesign ? <p className="text-sm text-zinc-500">Memuat file desain…</p> : designFiles?.source ? <img src={designFiles.source} alt="Gambar desain customer" className="max-h-[300px] max-w-full rounded-2xl object-contain" /> : <p className="text-sm text-red-600">File desain belum tersedia.</p>}
+                      <div className="flex flex-wrap justify-center gap-2 text-sm font-bold">
+                        {designFiles?.model && <a href={designFiles.model} target="_blank" rel="noreferrer" className="rounded-full bg-orange-600 px-4 py-2 text-white">File desain 3MF</a>}
+                      </div>
+                      <p className="text-center text-xs text-zinc-500">File model hanya terlihat oleh admin. Cetak uji sebelum produksi.</p>
+                    </div>
+                  ) : (imageFromNotes(selectedOrder.notes) || productPreviewImage) ? <div className="grid h-full place-items-center bg-white p-5"><img src={(imageFromNotes(selectedOrder.notes) || productPreviewImage)!} alt="Gambar produk yang dipilih customer" className="max-h-full max-w-full object-contain" /></div> : <Clicker3D
                     letters={selectedOrder.letters}
                     baseColor={selectedOrder.base_color}
                     capColors={getOrderColorMap(selectedOrder.letter_colors, "capColors")}
                     fontColors={getOrderColorMap(selectedOrder.letter_colors, "fontColors")}
                     selectedLetter={null}
                     onSelectLetter={() => undefined}
-                  />
+                  />}
                 </div>
               </div>
 
@@ -707,30 +745,39 @@ export default function AdminPage() {
                       "Nomor tidak tersedia"}
                   </p>
 
-                  {selectedOrder.notes && (
+                  <div className="mt-3 rounded-xl bg-white p-3 text-sm text-zinc-700">
+                    <p className="font-bold">Alamat pengiriman</p>
+                    <p className="mt-1">{selectedOrder.shipping_recipient_name || selectedOrder.customer_name} · {selectedOrder.shipping_phone || selectedOrder.customer_phone || "Nomor tidak tersedia"}</p>
+                    <p className="mt-1">{[selectedOrder.shipping_address, selectedOrder.shipping_district, selectedOrder.shipping_city, selectedOrder.shipping_province, selectedOrder.shipping_postal_code].filter(Boolean).join(", ") || "Alamat tidak tersimpan pada order ini."}</p>
+                    {(selectedOrder.shipping_courier || selectedOrder.shipping_service) && <p className="mt-2">Kurir: {[selectedOrder.shipping_courier, selectedOrder.shipping_service].filter(Boolean).join(" · ")}</p>}
+                  </div>
+
+                  {selectedOrder.notes?.replace(/\n?CLICKER_DESIGN:[0-9a-f-]{36}:(?:relief|silhouette)/ig, "").replace(/\n?CLICKER_SETTINGS:[^\r\n]+/ig, "").replace(/\n?ITEM_IMAGE:[^\r\n]+/ig, "").trim() && (
                     <div className="mt-3 rounded-xl bg-white p-3 text-sm whitespace-pre-line text-zinc-600">
                       <span className="font-semibold">
                         Catatan:
                       </span>{" "}
-                      {selectedOrder.notes}
+                      {selectedOrder.notes.replace(/\n?CLICKER_DESIGN:[0-9a-f-]{36}:(?:relief|silhouette)/ig, "").replace(/\n?CLICKER_SETTINGS:[^\r\n]+/ig, "").replace(/\n?ITEM_IMAGE:[^\r\n]+/ig, "").trim()}
                     </div>
                   )}
 
-                  <button
-                    onClick={() =>
-                      openWhatsApp(selectedOrder)
-                    }
-                    className="mt-4 w-full rounded-full bg-green-600 px-5 py-2.5 text-sm font-bold text-white transition hover:bg-green-700"
-                  >
+                  <a href={whatsappHref(selectedOrder) ?? undefined} target="_blank" rel="noopener noreferrer" aria-disabled={!whatsappHref(selectedOrder)} className={`mt-4 block w-full rounded-full bg-green-600 px-5 py-2.5 text-center text-sm font-bold text-white transition hover:bg-green-700 ${!whatsappHref(selectedOrder) ? "pointer-events-none opacity-50" : ""}`}>
                     💬 WhatsApp Customer
-                  </button>
+                  </a>
                 </div>
 
                 {/* CONFIG */}
                 <div className="rounded-2xl border border-zinc-200 p-5">
                   <h3 className="font-bold">
-                    Konfigurasi Custom
+                    {designIdFromNotes(selectedOrder.notes) ? "Desain Custom" : "Konfigurasi Custom"}
                   </h3>
+
+                  {designIdFromNotes(selectedOrder.notes) ? (
+                    <div className="mt-3 text-sm text-zinc-600">
+                      <p>Jenis: {selectedOrder.notes?.match(/CLICKER_DESIGN:[0-9a-f-]{36}:(relief|silhouette)/i)?.[1] === "silhouette" ? "Siluet" : "Relief gambar"}</p>
+                      {(() => { const settings = designSettingsFromNotes(selectedOrder.notes); return settings ? <div className="mt-2 space-y-1"><p>Tombol: {String(settings.buttonCount ?? 1)}</p><p>Ukuran per tombol: {String(settings.widthMm ?? "-")} mm</p><p>Tebal badan / cap: {String(settings.bodyHeightMm ?? "-")} / {String(settings.capHeightMm ?? "-")} mm</p><p>Bentuk: {String(settings.baseShape ?? "-")} • Loop: {settings.keychainLoop ? "Ya" : "Tidak"}</p><p>Kelonggaran switch: {String(settings.switchToleranceMm ?? "-")} mm</p></div> : null; })()}
+                    </div>
+                  ) : <>
 
                   <div className="mt-4 flex items-center gap-3">
                     <span className="text-sm text-zinc-500">
@@ -783,6 +830,7 @@ export default function AdminPage() {
                       }
                     )}
                   </div>
+                  </>}
                 </div>
 
                 {/* PRICE */}
@@ -811,15 +859,18 @@ export default function AdminPage() {
 
                   <div className="my-4 border-t border-zinc-200" />
 
+                  <div className="mb-3 flex justify-between text-sm">
+                    <span className="text-zinc-500">Ongkir</span>
+                    <span className="font-semibold">{rupiah(Number(selectedOrder.shipping_cost ?? 0))}</span>
+                  </div>
+
                   <div className="flex justify-between">
                     <span className="font-bold">
                       Total
                     </span>
 
                     <span className="text-xl font-black">
-                      {rupiah(
-                        Number(selectedOrder.total || 0)
-                      )}
+                      {rupiah(Number(selectedOrder.total || 0) + Number(selectedOrder.shipping_cost ?? 0))}
                     </span>
                   </div>
                 </div>

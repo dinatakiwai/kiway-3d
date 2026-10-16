@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import { supabase } from "@/lib/supabase";
+import { useStoreSettings } from "@/lib/useStoreSettings";
 
 type Product = {
   id: string;
@@ -25,6 +26,7 @@ function formatRupiah(value: number) {
 }
 
 export default function CatalogPage() {
+  const { classicClickerEnabled } = useStoreSettings();
   const [products, setProducts] = useState<Product[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
@@ -70,12 +72,12 @@ export default function CatalogPage() {
               </p>
             </div>
 
-            <Link
+            {classicClickerEnabled && <Link
               href="/catalog/clicker"
               className="w-fit rounded-full bg-zinc-950 px-6 py-3 font-bold text-white transition hover:bg-orange-500"
             >
               🎨 Custom Clicker
-            </Link>
+            </Link>}
           </div>
         </div>
       </section>

@@ -13,6 +13,8 @@ const defaultSettings = {
   shopeeUrl: "",
   clickerStartingPrice: 54000,
   pricePerExtraKeycap: 5000,
+  classicClickerEnabled: true,
+  imageClickerEnabled: true,
 };
 
 async function superAdmin(request: NextRequest) {
@@ -42,7 +44,7 @@ function validColors(value: unknown): value is ClickerColor[] {
 
 export async function GET() {
   const { data, error } = await supabaseAdmin.from("store_settings")
-    .select("whatsapp,whatsapp_greeting,base_colors,cap_colors,font_colors,clicker_starting_price,price_per_extra_keycap,instagram_url,tiktok_url,shopee_url")
+    .select("whatsapp,whatsapp_greeting,base_colors,cap_colors,font_colors,clicker_starting_price,price_per_extra_keycap,instagram_url,tiktok_url,shopee_url,classic_clicker_enabled,image_clicker_enabled")
     .eq("id", "default").maybeSingle();
   if (error || !data) return NextResponse.json({ settings: defaultSettings });
   return NextResponse.json({ settings: {
@@ -56,6 +58,8 @@ export async function GET() {
     shopeeUrl: data.shopee_url ?? "",
     clickerStartingPrice: data.clicker_starting_price,
     pricePerExtraKeycap: data.price_per_extra_keycap,
+    classicClickerEnabled: data.classic_clicker_enabled ?? true,
+    imageClickerEnabled: data.image_clicker_enabled ?? true,
   } });
 }
 
@@ -70,6 +74,8 @@ export async function PUT(request: NextRequest) {
   const baseColors = body?.baseColors;
   const capColors = body?.capColors;
   const fontColors = body?.fontColors;
+  const classicClickerEnabled = typeof body?.classicClickerEnabled === "boolean" ? body.classicClickerEnabled : true;
+  const imageClickerEnabled = typeof body?.imageClickerEnabled === "boolean" ? body.imageClickerEnabled : true;
   const socials = {
     instagram_url: typeof body?.instagramUrl === "string" ? body.instagramUrl.trim() : "",
     tiktok_url: typeof body?.tiktokUrl === "string" ? body.tiktokUrl.trim() : "",
@@ -92,14 +98,16 @@ export async function PUT(request: NextRequest) {
     cap_colors: capColors.map((color) => ({ name: color.name.trim(), value: color.value.toLowerCase() })),
     font_colors: fontColors.map((color) => ({ name: color.name.trim(), value: color.value.toLowerCase() })),
     ...socials,
+    classic_clicker_enabled: classicClickerEnabled,
+    image_clicker_enabled: imageClickerEnabled,
     updated_at: new Date().toISOString(),
-  }, { onConflict: "id" }).select("whatsapp,whatsapp_greeting,base_colors,cap_colors,font_colors,instagram_url,tiktok_url,shopee_url").single();
+  }, { onConflict: "id" }).select("whatsapp,whatsapp_greeting,base_colors,cap_colors,font_colors,instagram_url,tiktok_url,shopee_url,classic_clicker_enabled,image_clicker_enabled").single();
 
   if (error || !data) {
     console.error("Store settings save failed", { code: error?.code, message: error?.message, hint: error?.hint });
     const schemaCacheIssue = error?.code === "42703" || error?.code === "PGRST204" || error?.code === "PGRST200";
     return NextResponse.json({ error: schemaCacheIssue
-      ? "Kolom pengaturan toko belum lengkap atau belum terbaca Supabase. Jalankan ulang migration 202610100001_catalog_discounts.sql di project yang sama, lalu refresh schema."
+      ? "Kolom pengaturan toko belum lengkap atau belum terbaca Supabase. Jalankan migration terbaru di folder supabase/migrations, lalu refresh schema."
       : "Pengaturan gagal disimpan. Periksa koneksi dan migration pengaturan toko di Supabase." }, { status: 500 });
   }
 
@@ -112,5 +120,7 @@ export async function PUT(request: NextRequest) {
     instagramUrl: data.instagram_url ?? "",
     tiktokUrl: data.tiktok_url ?? "",
     shopeeUrl: data.shopee_url ?? "",
+    classicClickerEnabled: data.classic_clicker_enabled ?? true,
+    imageClickerEnabled: data.image_clicker_enabled ?? true,
   } });
 }

@@ -61,6 +61,8 @@ export default function StoreSettingsPage() {
   const [baseColors, setBaseColors] = useState<ClickerColor[]>(DEFAULT_BASE_COLORS);
   const [capColors, setCapColors] = useState<ClickerColor[]>(DEFAULT_CAP_COLORS);
   const [fontColors, setFontColors] = useState<ClickerColor[]>(DEFAULT_FONT_COLORS);
+  const [classicClickerEnabled, setClassicClickerEnabled] = useState(true);
+  const [imageClickerEnabled, setImageClickerEnabled] = useState(true);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [allowed, setAllowed] = useState(false);
@@ -103,6 +105,8 @@ export default function StoreSettingsPage() {
           setBaseColors(result.settings.baseColors?.length ? result.settings.baseColors : DEFAULT_BASE_COLORS);
           setCapColors(result.settings.capColors?.length ? result.settings.capColors : DEFAULT_CAP_COLORS);
           setFontColors(result.settings.fontColors?.length ? result.settings.fontColors : DEFAULT_FONT_COLORS);
+          setClassicClickerEnabled(result.settings.classicClickerEnabled !== false);
+          setImageClickerEnabled(result.settings.imageClickerEnabled !== false);
         }
       } catch {
         if (active) setError("Pengaturan belum dapat dimuat. Coba muat ulang halaman.");
@@ -135,7 +139,7 @@ export default function StoreSettingsPage() {
           "Content-Type": "application/json",
           Authorization: `Bearer ${session.access_token}`,
         },
-        body: JSON.stringify({ whatsapp, whatsappGreeting: greeting, baseColors, capColors, fontColors, instagramUrl, tiktokUrl, shopeeUrl }),
+        body: JSON.stringify({ whatsapp, whatsappGreeting: greeting, baseColors, capColors, fontColors, instagramUrl, tiktokUrl, shopeeUrl, classicClickerEnabled, imageClickerEnabled }),
       });
       const result = await response.json();
       if (!response.ok) throw new Error(result.error || "Pengaturan gagal disimpan.");
@@ -148,6 +152,8 @@ export default function StoreSettingsPage() {
       setBaseColors(result.settings.baseColors);
       setCapColors(result.settings.capColors);
       setFontColors(result.settings.fontColors);
+      setClassicClickerEnabled(result.settings.classicClickerEnabled !== false);
+      setImageClickerEnabled(result.settings.imageClickerEnabled !== false);
       notifyStoreSettingsChanged();
       setSuccess("Pengaturan toko dan stok warna berhasil disimpan.");
     } catch (err) {
@@ -187,6 +193,18 @@ export default function StoreSettingsPage() {
               <textarea id="greeting" value={greeting} onChange={(event) => setGreeting(event.target.value)} maxLength={500} rows={3} required className="mt-2 w-full resize-y rounded-xl border border-zinc-300 px-4 py-3 outline-none transition focus:border-orange-400 focus:ring-4 focus:ring-orange-100" />
               <p className="mt-2 text-xs text-zinc-500">Pesan ini menjadi pembuka chat dan otomatis diikuti rincian pesanan saat checkout.</p>
             </div>
+          </div>
+
+          <div className="space-y-5 rounded-2xl border border-zinc-200 bg-white p-5 shadow-sm md:p-8">
+            <div>
+              <h2 className="text-xl font-black text-zinc-950">Fitur Custom Clicker</h2>
+              <p className="mt-1 text-sm text-zinc-500">Pilih fitur custom yang tersedia untuk pelanggan.</p>
+            </div>
+            {([["classic", "Custom clicker nama", "Pelanggan membuat clicker dari susunan huruf."], ["image", "Custom clicker dari gambar", "Pelanggan mengunggah gambar dan membuat desain clicker."]] as const).map(([key, title, description]) => {
+              const enabled = key === "classic" ? classicClickerEnabled : imageClickerEnabled;
+              const setEnabled = key === "classic" ? setClassicClickerEnabled : setImageClickerEnabled;
+              return <label key={key} className="flex items-center justify-between gap-4 rounded-xl border border-zinc-200 p-4"><span><b className="block text-sm">{title}</b><span className="mt-1 block text-xs text-zinc-500">{description}</span></span><input type="checkbox" checked={enabled} onChange={(event) => setEnabled(event.target.checked)} className="h-5 w-5 accent-orange-500" /></label>;
+            })}
           </div>
 
           <div className="space-y-5 rounded-2xl border border-zinc-200 bg-white p-5 shadow-sm md:p-8">

@@ -21,6 +21,9 @@ export type ClickerCartItem = ShippingPackageMeta & {
   capColors: Record<number, string>;
   fontColors: Record<number, string>;
   keychain?: KeychainSelection | null;
+  clickerDesignId?: string;
+  clickerDesignMode?: "relief" | "silhouette";
+  clickerDesignSettings?: string;
   price: number;
   quantity: number;
 };
@@ -87,6 +90,7 @@ export function addToCart(
             .sort(([a], [b]) => Number(a) - Number(b))
             .map(([index, color]) => `font-${index}:${color}`),
           item.keychain?.productId ?? "no-keychain",
+          item.clickerDesignId ?? "no-image-design",
         ].join("__");
 
   const existing = cart.find((cartItem) => cartItem.id === id);

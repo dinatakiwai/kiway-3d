@@ -64,12 +64,12 @@ export default function Home() {
             </p>
 
             <div className="mt-9 flex flex-col gap-3 sm:flex-row">
-              <Link
+              {storeSettings.classicClickerEnabled && <Link
                 href="/customizer"
                 className="rounded-full bg-zinc-900 px-7 py-4 text-center font-bold text-white transition hover:-translate-y-0.5 hover:bg-orange-500"
               >
                 🎨 Mulai Custom
-              </Link>
+              </Link>}
 
               <a
                 href="#produk"
@@ -151,12 +151,12 @@ export default function Home() {
               </p>
             </div>
 
-            <Link
+            {storeSettings.classicClickerEnabled && <Link
               href="/catalog/clicker"
               className="w-fit rounded-full bg-zinc-950 px-6 py-3 font-bold text-white transition hover:bg-orange-500"
             >
               Custom Clicker
-            </Link>
+            </Link>}
           </div>
 
           <div className="mt-10">

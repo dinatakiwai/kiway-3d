@@ -255,6 +255,17 @@ export default function CheckoutPage() {
       return;
     }
 
+    const featureResponse = await fetch("/api/store-settings", { cache: "no-store" });
+    const featureSettings = featureResponse.ok ? (await featureResponse.json()).settings : null;
+    if (items.some((item) => item.product === "clicker" && item.clickerDesignId && featureSettings?.imageClickerEnabled === false)) {
+      setError("Fitur clicker dari gambar sudah dinonaktifkan. Hapus item tersebut dari keranjang untuk melanjutkan.");
+      return;
+    }
+    if (items.some((item) => item.product === "clicker" && !item.clickerDesignId && featureSettings?.classicClickerEnabled === false)) {
+      setError("Custom clicker nama sudah dinonaktifkan. Hapus item tersebut dari keranjang untuk melanjutkan.");
+      return;
+    }
+
     setLoading(true);
 
     try {
@@ -275,6 +286,8 @@ export default function CheckoutPage() {
         // Struktur order KEILAB saat ini membuat satu order untuk setiap
         // item keranjang. Ongkir checkout dibebankan sekali, ke order pertama.
         const orderShippingCost = index === 0 ? shippingCost : 0;
+        const itemImage = ("selectedOptions" in item ? item.selectedOptions?.find((option) => option.imageUrl)?.imageUrl : null)
+          || ("imageUrl" in item ? item.imageUrl : null);
 
         const { data, error: orderError } = await supabase.rpc(
           "create_order",
@@ -289,6 +302,13 @@ export default function CheckoutPage() {
               item.product === "catalog" && item.selectedOptions?.length
                 ? `Pilihan produk: ${item.selectedOptions.filter((option) => option.choiceLabel).map((option) => `${option.groupName}: ${option.choiceLabel}${option.price ? option.priceMode === "set" ? ` (harga Rp${option.price.toLocaleString("id-ID")})` : ` (+Rp${option.price.toLocaleString("id-ID")})` : ""}`).join(", ")}`
                 : "",
+              item.product === "clicker" && item.clickerDesignId
+                ? `CLICKER_DESIGN:${item.clickerDesignId}:${item.clickerDesignMode ?? "relief"}`
+                : "",
+              item.product === "clicker" && item.clickerDesignSettings
+                ? `CLICKER_SETTINGS:${encodeURIComponent(item.clickerDesignSettings)}`
+                : "",
+              itemImage ? `ITEM_IMAGE:${encodeURIComponent(itemImage)}` : "",
             ].filter(Boolean).join("\n") || null,
             p_product: productType,
             p_custom_name: item.name,
@@ -331,8 +351,23 @@ export default function CheckoutPage() {
           );
         }
 
+        let orderCode = row.order_code;
+        if (row.order_code) {
+          try {
+            const codeResponse = await fetch("/api/orders/tracking-code", {
+              method: "POST",
+              headers: { "content-type": "application/json" },
+              body: JSON.stringify({ previousCode: row.order_code, phone: customerPhone.trim() }),
+            });
+            const codeResult = await codeResponse.json();
+            if (codeResponse.ok && codeResult.orderCode) orderCode = codeResult.orderCode;
+          } catch {
+            // Order is already created; retain its existing code if the format update is unavailable.
+          }
+        }
+
         results.push({
-          order_code: row.order_code,
+          order_code: orderCode,
           custom_name: row.custom_name ?? item.name,
           quantity: Number(row.quantity ?? quantity),
           total: Number(row.total ?? itemTotal),
@@ -395,10 +430,10 @@ export default function CheckoutPage() {
 
     const trackingUrl =
       typeof window !== "undefined"
-        ? `${window.location.origin}/tracking?order=${encodeURIComponent(
+        ? `${window.location.origin}/tracking?code=${encodeURIComponent(
             trackingCode
           )}`
-        : `/tracking?order=${encodeURIComponent(trackingCode)}`;
+        : `/tracking?code=${encodeURIComponent(trackingCode)}`;
 
     const whatsappText = [
       storeSettings.whatsappGreeting,

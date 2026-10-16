@@ -57,13 +57,14 @@ function statusClass(status: string | null) {
 function TrackingContent() {
   const searchParams = useSearchParams();
 
-  const [code, setCode] = useState(searchParams.get("code") || "");
+  const initialCode = searchParams.get("code") || searchParams.get("order") || "";
+  const [code, setCode] = useState(initialCode);
   const [order, setOrder] = useState<TrackingOrder | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
 
   useEffect(() => {
-    const urlCode = searchParams.get("code");
+    const urlCode = searchParams.get("code") || searchParams.get("order");
 
     if (urlCode) {
       setCode(urlCode);
@@ -133,7 +134,7 @@ function TrackingContent() {
             <input
               value={code}
               onChange={(event) => setCode(event.target.value.toUpperCase())}
-              placeholder="Contoh: KEILAB-20260907-0001"
+              placeholder="Contoh: KEILAB-20261016-4A91C62D183F atau KW-..."
               className="min-w-0 flex-1 rounded-2xl border border-white/10 bg-white px-4 py-4 font-bold text-zinc-900 outline-none focus:ring-4 focus:ring-orange-500/30"
             />
 
