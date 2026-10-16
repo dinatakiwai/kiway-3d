@@ -76,6 +76,12 @@ const rupiah = (n: number) =>
     maximumFractionDigits: 0,
   }).format(n);
 
+function courierLabel(value: string | null | undefined) {
+  const key = String(value ?? "").toLowerCase().replace(/[^a-z]/g, "");
+  const names: Record<string, string> = { jne: "JNE", jnt: "J&T", sicepat: "SiCepat", anteraja: "AnterAja", tiki: "TIKI", pos: "POS Indonesia", wahana: "Wahana", ninja: "Ninja Xpress", lion: "Lion Parcel" };
+  return names[key] || value || "Kurir tidak tercatat";
+}
+
 function getOrderColorMap(
   stored: Record<string, unknown> | null | undefined,
   key: "capColors" | "fontColors"
@@ -749,7 +755,7 @@ export default function AdminPage() {
                     <p className="font-bold">Alamat pengiriman</p>
                     <p className="mt-1">{selectedOrder.shipping_recipient_name || selectedOrder.customer_name} · {selectedOrder.shipping_phone || selectedOrder.customer_phone || "Nomor tidak tersedia"}</p>
                     <p className="mt-1">{[selectedOrder.shipping_address, selectedOrder.shipping_district, selectedOrder.shipping_city, selectedOrder.shipping_province, selectedOrder.shipping_postal_code].filter(Boolean).join(", ") || "Alamat tidak tersimpan pada order ini."}</p>
-                    {(selectedOrder.shipping_courier || selectedOrder.shipping_service) && <p className="mt-2">Kurir: {[selectedOrder.shipping_courier, selectedOrder.shipping_service].filter(Boolean).join(" · ")}</p>}
+                    {(selectedOrder.shipping_courier || selectedOrder.shipping_service) && <p className="mt-2">Ekspedisi: {[courierLabel(selectedOrder.shipping_courier), selectedOrder.shipping_service].filter(Boolean).join(" · ")}</p>}
                   </div>
 
                   {selectedOrder.notes?.replace(/\n?CLICKER_DESIGN:[0-9a-f-]{36}:(?:relief|silhouette)/ig, "").replace(/\n?CLICKER_SETTINGS:[^\r\n]+/ig, "").replace(/\n?ITEM_IMAGE:[^\r\n]+/ig, "").trim() && (
@@ -859,8 +865,8 @@ export default function AdminPage() {
 
                   <div className="my-4 border-t border-zinc-200" />
 
-                  <div className="mb-3 flex justify-between text-sm">
-                    <span className="text-zinc-500">Ongkir</span>
+                  <div className="mb-3 flex items-center justify-between gap-3 text-sm">
+                    <span className="text-zinc-500"><span className="block">Ongkir</span><span className="mt-1 block text-xs font-semibold text-zinc-400">{[courierLabel(selectedOrder.shipping_courier), selectedOrder.shipping_service].filter(Boolean).join(" · ")}</span></span>
                     <span className="font-semibold">{rupiah(Number(selectedOrder.shipping_cost ?? 0))}</span>
                   </div>
 

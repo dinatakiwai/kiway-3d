@@ -53,6 +53,9 @@ function formatRupiah(value: number) {
 
 export default function AdminCatalogPage() {
   const [products, setProducts] = useState<Product[]>([]);
+  const [categories, setCategories] = useState<string[]>([]);
+  const [newCategory, setNewCategory] = useState("");
+  const [categoryEdits, setCategoryEdits] = useState<Record<string, string>>({});
   const [inventory, setInventory] = useState<InventoryItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
@@ -108,12 +111,40 @@ export default function AdminCatalogPage() {
       setInventory((inventoryResult.data ?? []) as InventoryItem[]);
     }
 
+    try {
+      const categoryResponse = await fetch("/api/catalog-categories", { cache: "no-store" });
+      const categoryResult = await categoryResponse.json();
+      if (categoryResponse.ok) setCategories(Array.isArray(categoryResult.categories) ? categoryResult.categories : []);
+    } catch { /* Keep category controls usable with their existing value. */ }
+
     setLoading(false);
   }
 
   useEffect(() => {
     loadData();
   }, []);
+
+  async function manageCategory(action: "create" | "rename" | "delete", name: string, nextName?: string) {
+    setError(""); setMessage("");
+    const { data: { session } } = await supabase.auth.getSession();
+    if (!session?.access_token) { setError("Sesi login berakhir. Masuk kembali sebagai admin."); return; }
+    try {
+      const response = await fetch("/api/catalog-categories", {
+        method: "POST",
+        headers: { "Content-Type": "application/json", Authorization: `Bearer ${session.access_token}` },
+        body: JSON.stringify({ action, name, nextName }),
+      });
+      const result = await response.json();
+      if (!response.ok) throw new Error(result.error || "Kategori gagal diperbarui.");
+      setCategories(result.categories);
+      if (action === "rename" && form.category === name) setForm((current) => ({ ...current, category: nextName || name }));
+      if (action === "delete" && form.category === name) setForm((current) => ({ ...current, category: "Lainnya" }));
+      setCategoryEdits({});
+      setNewCategory("");
+      setMessage(action === "create" ? "Kategori berhasil ditambahkan." : action === "rename" ? "Kategori dan produk terkait berhasil diganti." : "Kategori dihapus. Produk terkait dipindahkan ke Lainnya.");
+      await loadData();
+    } catch (err) { setError(err instanceof Error ? err.message : "Kategori gagal diperbarui."); }
+  }
 
   function resetForm() {
     photos.forEach((photo) => { if (photo.file) URL.revokeObjectURL(photo.url); });
@@ -369,6 +400,24 @@ export default function AdminCatalogPage() {
         </div>
 
         <section className="mb-8 rounded-3xl bg-white p-5 shadow-sm ring-1 ring-neutral-200 md:p-7">
+          <div>
+            <h2 className="text-xl font-bold">Kategori yang tampil di katalog</h2>
+            <p className="mt-1 text-sm text-neutral-500">Tambah kategori seperti Keycaps, K-pop, atau Produk Terlaris, lalu pilih kategori saat menambah atau mengedit produk. Menghapus kategori memindahkan produknya ke “Lainnya”.</p>
+          </div>
+          <div className="mt-4 flex flex-col gap-2 sm:flex-row">
+            <input value={newCategory} onChange={(event) => setNewCategory(event.target.value)} maxLength={40} placeholder="Nama kategori baru" className="min-w-0 flex-1 rounded-xl border border-neutral-300 px-4 py-3 outline-none focus:border-orange-500" />
+            <button type="button" disabled={!newCategory.trim()} onClick={() => manageCategory("create", newCategory.trim())} className="rounded-xl bg-zinc-900 px-5 py-3 text-sm font-bold text-white disabled:opacity-40">+ Tambah kategori</button>
+          </div>
+          <div className="mt-4 grid gap-2 sm:grid-cols-2">
+            {categories.map((category) => <div key={category} className="flex min-w-0 gap-2 rounded-xl border border-neutral-200 p-2">
+              <input aria-label={`Edit kategori ${category}`} value={categoryEdits[category] ?? category} onChange={(event) => setCategoryEdits((current) => ({ ...current, [category]: event.target.value }))} maxLength={40} className="min-w-0 flex-1 rounded-lg border border-neutral-200 px-3 py-2 text-sm" />
+              <button type="button" disabled={!categoryEdits[category]?.trim() || (categoryEdits[category] ?? category) === category} onClick={() => manageCategory("rename", category, categoryEdits[category]?.trim())} className="rounded-lg px-2 text-xs font-bold text-orange-700 disabled:opacity-40">Simpan</button>
+              <button type="button" onClick={() => { if (window.confirm(`Hapus kategori “${category}”? Produk di dalamnya akan dipindahkan ke Lainnya.`)) void manageCategory("delete", category); }} className="rounded-lg px-2 text-xs font-bold text-red-600">Hapus</button>
+            </div>)}
+          </div>
+        </section>
+
+        <section className="mb-8 rounded-3xl bg-white p-5 shadow-sm ring-1 ring-neutral-200 md:p-7">
           <div className="mb-6 flex items-center justify-between gap-3">
             <div>
               <h2 className="text-xl font-bold">
@@ -533,7 +582,7 @@ export default function AdminCatalogPage() {
                 <label className="mb-2 block text-sm font-semibold">
                   Kategori
                 </label>
-                <input
+                <select
                   value={form.category}
                   onChange={(e) =>
                     setForm((v) => ({
@@ -541,9 +590,10 @@ export default function AdminCatalogPage() {
                       category: e.target.value,
                     }))
                   }
-                  placeholder="Contoh: Gantungan Kunci"
                   className="w-full rounded-xl border border-neutral-300 px-4 py-3 outline-none focus:border-orange-500"
-                />
+                >
+                  {[...new Set([...categories, form.category].filter(Boolean))].map((category) => <option key={category} value={category}>{category}</option>)}
+                </select>
                 <p className="mt-2 text-xs text-neutral-500">Agar foto dan harga produk muncul di customizer clicker, gunakan kategori “Gantungan Kunci”, isi stok lebih dari 0, dan pastikan produk aktif.</p>
               </div>
 

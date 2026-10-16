@@ -580,7 +580,7 @@ export default function CheckoutPage() {
   }
 
   return (
-    <main className="min-h-screen bg-[#faf9f7] px-6 py-12 text-zinc-900">
+    <main className="min-h-screen bg-[#faf9f7] px-4 py-6 text-zinc-900 sm:px-6 sm:py-12">
       <div className="mx-auto max-w-6xl">
         <Link
           href="/cart"
@@ -589,20 +589,8 @@ export default function CheckoutPage() {
           ← Kembali ke Keranjang
         </Link>
 
-        <div className="mt-8">
-          <div className="flex h-9 w-[145px] items-center">
-            <img
-              src="/keilab-logo.svg"
-              alt="KEILAB.ID"
-              className="h-full w-full object-contain object-left"
-            />
-          </div>
-          <h1 className="mt-2 text-4xl font-black tracking-tight">
-            Checkout
-          </h1>
-          <p className="mt-3 text-zinc-500">
-            Isi alamat pengiriman. Ongkir akan dihitung realtime dari Biteship.
-          </p>
+        <div className="mt-4 sm:mt-8">
+          <h1 className="text-3xl font-black tracking-tight sm:text-4xl">Checkout</h1>
         </div>
 
         {!items.length ? (
@@ -617,9 +605,9 @@ export default function CheckoutPage() {
             </Link>
           </div>
         ) : (
-          <div className="mt-10 grid gap-6 lg:grid-cols-[1fr_380px]">
+          <div className="mt-5 grid gap-4 sm:mt-10 sm:gap-6 lg:grid-cols-[1fr_380px]">
             <section className="space-y-6">
-              <div className="rounded-[2rem] border border-zinc-200 bg-white p-6 shadow-sm">
+              <div className="rounded-2xl border border-zinc-200 bg-white p-4 shadow-sm sm:rounded-[2rem] sm:p-6">
                 <h2 className="text-xl font-black">Data Penerima</h2>
 
                 <div className="mt-6 grid gap-5 md:grid-cols-2">
@@ -646,7 +634,7 @@ export default function CheckoutPage() {
                 </div>
               </div>
 
-              <div className="rounded-[2rem] border border-zinc-200 bg-white p-6 shadow-sm">
+              <div className="rounded-2xl border border-zinc-200 bg-white p-4 shadow-sm sm:rounded-[2rem] sm:p-6">
                 <h2 className="text-xl font-black">Alamat Pengiriman</h2>
 
                 <div className="mt-6">
@@ -735,7 +723,17 @@ export default function CheckoutPage() {
                   />
                 </label>
 
-                <div className="mt-5 grid gap-4 md:grid-cols-2">
+                <div className="mt-5 rounded-2xl border border-zinc-200 bg-zinc-50 p-4 text-sm md:hidden">
+                  <p className="font-bold text-zinc-700">Area tujuan</p>
+                  <p className="mt-1 leading-6 text-zinc-600">
+                    {[shippingDistrict, shippingCity, shippingProvince]
+                      .filter(Boolean)
+                      .join(", ") || "Pilih area dari hasil pencarian"}
+                    {shippingPostalCode ? ` · ${shippingPostalCode}` : ""}
+                  </p>
+                </div>
+
+                <div className="mt-5 hidden gap-4 md:grid md:grid-cols-2">
                   <div>
                     <span className="text-sm font-bold">Provinsi</span>
                     <div className="mt-2 rounded-2xl border border-zinc-200 bg-zinc-50 px-4 py-3 text-sm font-semibold text-zinc-600">
@@ -780,7 +778,7 @@ export default function CheckoutPage() {
               </div>
 
               {rates.length > 0 && (
-                <div className="rounded-[2rem] border border-zinc-200 bg-white p-6 shadow-sm">
+                <div className="rounded-2xl border border-zinc-200 bg-white p-4 shadow-sm sm:rounded-[2rem] sm:p-6">
                   <h2 className="text-xl font-black">Pilih Pengiriman</h2>
                   <p className="mt-2 text-sm text-zinc-500">
                     Tarif realtime berdasarkan area tujuan dan berat paket.
@@ -825,7 +823,7 @@ export default function CheckoutPage() {
                 </div>
               )}
 
-              <div className="rounded-[2rem] border border-zinc-200 bg-white p-6 shadow-sm">
+              <div className="rounded-2xl border border-zinc-200 bg-white p-4 shadow-sm sm:rounded-[2rem] sm:p-6">
                 <label className="block">
                   <span className="text-sm font-bold">
                     Catatan{" "}
@@ -850,7 +848,7 @@ export default function CheckoutPage() {
               )}
             </section>
 
-            <aside className="h-fit rounded-[2rem] border border-zinc-200 bg-white p-6 shadow-sm lg:sticky lg:top-6">
+            <aside className="h-fit rounded-2xl border border-zinc-200 bg-white p-4 shadow-sm sm:rounded-[2rem] sm:p-6 lg:sticky lg:top-6">
               <p className="text-sm font-semibold text-zinc-400">
                 Ringkasan Pesanan
               </p>

@@ -78,7 +78,8 @@ export default function Navbar() {
   return (
     <>
       <header className="relative z-50 border-b border-zinc-200 bg-white">
-        <div className="mx-auto flex h-16 max-w-7xl items-center justify-between px-5">
+        <div className="mx-auto max-w-7xl">
+          <div className="flex h-16 items-center justify-between px-5">
           <Link
             href="/"
             aria-label="KEILAB.ID"
@@ -157,6 +158,14 @@ export default function Navbar() {
               </Link>
             )}
           </div>
+          </div>
+          <nav aria-label="Navigasi utama" className="flex gap-5 overflow-x-auto border-t border-zinc-100 px-5 py-3 md:hidden">
+            <Link href="/catalog" className="shrink-0 text-sm font-semibold text-zinc-700">Produk</Link>
+            <Link href="/#cara-kerja" className="shrink-0 text-sm font-semibold text-zinc-700">Cara Kerja</Link>
+            <Link href="/#tentang" className="shrink-0 text-sm font-semibold text-zinc-700">Tentang</Link>
+            <Link href="/tracking" className="shrink-0 text-sm font-bold text-zinc-900">Lacak Pesanan</Link>
+            <Link href="/cek-ongkir" className="shrink-0 text-sm font-semibold text-zinc-700">Cek Ongkir</Link>
+          </nav>
         </div>
       </header>
 
