@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { supabaseAdmin } from "@/lib/supabaseAdmin";
+import { STORE } from "@/lib/store";
 
 function cleanList(value: unknown): string[] {
   if (!Array.isArray(value)) return [];
@@ -61,8 +62,24 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: "Perintah kategori tidak dikenal." }, { status: 400 });
   }
 
+  // store_settings has required WhatsApp columns. Include their current values
+  // in the upsert so it also works if the default settings row is missing.
+  const { data: currentSettings, error: settingsReadError } = await supabaseAdmin
+    .from("store_settings")
+    .select("whatsapp,whatsapp_greeting")
+    .eq("id", "default")
+    .maybeSingle();
+  if (settingsReadError) {
+    console.error("Catalog category settings lookup failed", { code: settingsReadError.code, message: settingsReadError.message });
+    return NextResponse.json({ error: "Pengaturan toko gagal dibaca. Periksa schema Supabase." }, { status: 500 });
+  }
+
   const { error } = await supabaseAdmin.from("store_settings").upsert({
-    id: "default", catalog_categories: categories, updated_at: new Date().toISOString(),
+    id: "default",
+    whatsapp: currentSettings?.whatsapp || STORE.whatsapp,
+    whatsapp_greeting: currentSettings?.whatsapp_greeting || STORE.whatsappGreeting,
+    catalog_categories: categories,
+    updated_at: new Date().toISOString(),
   }, { onConflict: "id" });
   if (error) {
     console.error("Catalog categories save failed", { code: error.code, message: error.message });
