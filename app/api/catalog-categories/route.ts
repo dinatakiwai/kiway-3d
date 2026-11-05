@@ -28,7 +28,9 @@ async function isAdmin(request: NextRequest) {
 
 export async function GET() {
   return NextResponse.json({ categories: await getCategories() }, {
-    headers: { "Cache-Control": "public, s-maxage=300, stale-while-revalidate=600" },
+    // Categories are editable by the admin and should appear in the storefront
+    // immediately after a save instead of waiting for the CDN cache to expire.
+    headers: { "Cache-Control": "no-store, max-age=0" },
   });
 }
 

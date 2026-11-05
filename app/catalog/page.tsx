@@ -53,7 +53,7 @@ export default function CatalogPage() {
 
   useEffect(() => {
     loadProducts();
-    fetch("/api/catalog-categories").then((response) => response.json())
+    fetch("/api/catalog-categories", { cache: "no-store" }).then((response) => response.json())
       .then((result) => setCategories(Array.isArray(result.categories) ? result.categories : []))
       .catch(() => setCategories([]));
   }, []);
