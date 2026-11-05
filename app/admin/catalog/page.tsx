@@ -185,6 +185,39 @@ export default function AdminCatalogPage() {
     window.scrollTo({ top: 0, behavior: "smooth" });
   }
 
+  function startCopy(product: Product) {
+    resetForm();
+    const linkedInventory = inventory.find((item) => item.id === product.inventory_id);
+    const imageUrls = product.image_urls?.length
+      ? product.image_urls
+      : product.image_url ? [product.image_url] : [];
+
+    setForm({
+      title: `${product.title} (Salinan)`,
+      price: String(product.price),
+      compare_at_price: product.compare_at_price == null ? "" : String(product.compare_at_price),
+      stock: String(linkedInventory?.stock ?? product.stock),
+      category: product.category || "Lainnya",
+      description: product.description ?? "",
+      // A copied product uses its own manual stock to avoid coupling two products
+      // to the same finished-goods inventory record.
+      inventory_id: "",
+    });
+    setPhotos(imageUrls.slice(0, 4).map((url) => ({ url })));
+    setVideos((product.video_urls ?? []).slice(0, 4).map((url) => ({ url })));
+    setOptionGroups((product.option_groups ?? []).map((group) => ({
+      ...group,
+      id: crypto.randomUUID(),
+      priceMode: group.priceMode === "set" ? "set" : "add",
+      choices: Array.isArray(group.choices)
+        ? group.choices.map((choice) => ({ ...choice, imageFile: undefined }))
+        : [],
+    })));
+    setMessage(`Detail “${product.title}” disalin. Periksa judul dan stok sebelum menyimpan.`);
+    setError("");
+    window.scrollTo({ top: 0, behavior: "smooth" });
+  }
+
   function handleFileChange(selected: FileList | null) {
     if (!selected) return;
     const picked = Array.from(selected);
@@ -785,7 +818,15 @@ export default function AdminCatalogPage() {
                         </div>
                       </div>
 
-                      <div className="mt-5 grid grid-cols-3 gap-2">
+                      <div className="mt-5 grid grid-cols-2 gap-2">
+                        <button
+                          type="button"
+                          onClick={() => startCopy(product)}
+                          className="rounded-lg border border-orange-200 px-2 py-2 text-sm font-semibold text-orange-700 hover:bg-orange-50"
+                        >
+                          Salin
+                        </button>
+
                         <button
                           type="button"
                           onClick={() => startEdit(product)}
