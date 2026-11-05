@@ -205,15 +205,15 @@ Stok: ${stock} pcs`;
             <div className="aspect-square bg-zinc-100">
               {activeMediaItem ? (
                 activeMediaItem.type === "video" ? (
-                  <video src={activeMediaItem.url} poster={photos[0]} controls playsInline className="h-full w-full object-contain" />
-                ) : <img src={activeMediaItem.url} alt={`${currentProduct.title} ${activeMedia === -1 ? selectedOptions.find((item) => item.imageUrl)?.choiceLabel ?? "" : activeMedia + 1}`} className="h-full w-full object-cover" />
+                  <video src={activeMediaItem.url} poster={photos[0]} controls playsInline preload="none" className="h-full w-full object-contain" />
+                ) : <img src={activeMediaItem.url} alt={`${currentProduct.title} ${activeMedia === -1 ? selectedOptions.find((item) => item.imageUrl)?.choiceLabel ?? "" : activeMedia + 1}`} fetchPriority="high" decoding="async" className="h-full w-full object-cover" />
               ) : (
                 <div className="flex h-full items-center justify-center text-8xl">📦</div>
               )}
             </div>
             {media.length > 1 && <div className="flex gap-2 overflow-x-auto p-3">
               {media.map((item, index) => <button key={`${item.url}-${index}`} type="button" onClick={() => setActiveMedia(index)} aria-label={item.type === "video" ? `Putar video ${index - photos.length + 1}` : `Lihat foto ${index + 1}`} className={`relative h-16 w-16 shrink-0 overflow-hidden rounded-lg border-2 ${activeMedia === index ? "border-orange-500" : "border-transparent"}`}>
-                {item.type === "video" ? <><video src={item.url} muted className="h-full w-full object-cover" /><span className="absolute inset-0 grid place-items-center bg-black/25 text-white">▶</span></> : <img src={item.url} alt={`${currentProduct.title} ${index + 1}`} className="h-full w-full object-cover" />}
+                {item.type === "video" ? <><video src={item.url} muted preload="none" className="h-full w-full object-cover" /><span className="absolute inset-0 grid place-items-center bg-black/25 text-white">▶</span></> : <img src={item.url} alt={`${currentProduct.title} ${index + 1}`} loading="lazy" decoding="async" className="h-full w-full object-cover" />}
               </button>)}
             </div>}
           </div>
@@ -251,7 +251,7 @@ Stok: ${stock} pcs`;
                     const selected = selectedChoices[group.id] === choice.label;
                     const unavailable = typeof choice.stock === "number" && choice.stock <= 0;
                     return <button key={choice.label} type="button" disabled={unavailable} onClick={() => { setSelectedChoices((current) => ({ ...current, [group.id]: choice.label })); setActiveMedia(choice.imageUrl ? -1 : 0); setQuantity(1); }} className={`flex min-w-[118px] items-center gap-2 rounded-xl border px-3 py-2.5 text-left text-sm font-bold transition ${selected ? "border-orange-500 bg-orange-50 text-orange-700 ring-2 ring-orange-100" : "border-zinc-200 hover:border-orange-300"} disabled:cursor-not-allowed disabled:opacity-40`}>
-                      {choice.imageUrl && <img src={choice.imageUrl} alt="" className="h-10 w-10 shrink-0 rounded-lg object-cover" />}
+                      {choice.imageUrl && <img src={choice.imageUrl} alt="" loading="lazy" decoding="async" className="h-10 w-10 shrink-0 rounded-lg object-cover" />}
                       <span>{choice.label}</span>
                     </button>;
                   })}

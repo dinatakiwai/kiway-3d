@@ -42,7 +42,7 @@ export function useStoreSettings() {
     let active = true;
     const loadSettings = async () => {
       try {
-        const response = await fetch("/api/store-settings", { cache: "no-store" });
+        const response = await fetch("/api/store-settings");
         if (!response.ok) return;
         const data = await response.json();
         if (active && data.settings) {

@@ -26,7 +26,9 @@ async function isAdmin(request: NextRequest) {
 }
 
 export async function GET() {
-  return NextResponse.json({ categories: await getCategories() });
+  return NextResponse.json({ categories: await getCategories() }, {
+    headers: { "Cache-Control": "public, s-maxage=300, stale-while-revalidate=600" },
+  });
 }
 
 export async function POST(request: NextRequest) {

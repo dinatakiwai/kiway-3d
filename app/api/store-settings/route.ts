@@ -17,6 +17,11 @@ const defaultSettings = {
   imageClickerEnabled: true,
 };
 
+const publicSettingsCacheHeaders = {
+  // Browser revalidates each visit; Vercel can serve the public settings from its CDN for 30s.
+  "Cache-Control": "public, max-age=0, s-maxage=30, stale-while-revalidate=60",
+};
+
 async function superAdmin(request: NextRequest) {
   const token = request.headers.get("authorization")?.replace(/^Bearer\s+/i, "");
   if (!token) return null;
@@ -46,7 +51,7 @@ export async function GET() {
   const { data, error } = await supabaseAdmin.from("store_settings")
     .select("whatsapp,whatsapp_greeting,base_colors,cap_colors,font_colors,clicker_starting_price,price_per_extra_keycap,instagram_url,tiktok_url,shopee_url,classic_clicker_enabled,image_clicker_enabled")
     .eq("id", "default").maybeSingle();
-  if (error || !data) return NextResponse.json({ settings: defaultSettings });
+  if (error || !data) return NextResponse.json({ settings: defaultSettings }, { headers: publicSettingsCacheHeaders });
   return NextResponse.json({ settings: {
     whatsapp: data.whatsapp,
     whatsappGreeting: data.whatsapp_greeting,
@@ -60,7 +65,7 @@ export async function GET() {
     pricePerExtraKeycap: data.price_per_extra_keycap,
     classicClickerEnabled: data.classic_clicker_enabled ?? true,
     imageClickerEnabled: data.image_clicker_enabled ?? true,
-  } });
+  } }, { headers: publicSettingsCacheHeaders });
 }
 
 export async function PUT(request: NextRequest) {

@@ -2,6 +2,7 @@
 
 import { FormEvent, useEffect, useMemo, useState } from "react";
 import { supabase } from "@/lib/supabase";
+import { compressProductImage } from "@/lib/compressProductImage";
 
 type Product = {
   id: string;
@@ -216,17 +217,20 @@ export default function AdminCatalogPage() {
   }
 
   async function uploadAsset(nextFile: File) {
-    const extension =
-      nextFile.name.split(".").pop()?.toLowerCase() || "jpg";
+    const file = nextFile.type.startsWith("image/")
+      ? await compressProductImage(nextFile)
+      : nextFile;
+    const extension = file.name.split(".").pop()?.toLowerCase() || "jpg";
 
     const path = `products/${crypto.randomUUID()}.${extension}`;
 
     const { error: uploadError } = await supabase.storage
       .from("product-images")
-      .upload(path, nextFile, {
-        cacheControl: "3600",
+      .upload(path, file, {
+        // Upload paths are UUIDs, so files are immutable and safe to cache for a year.
+        cacheControl: "31536000",
         upsert: false,
-        contentType: nextFile.type,
+        contentType: file.type,
       });
 
     if (uploadError) throw uploadError;
@@ -452,7 +456,7 @@ export default function AdminCatalogPage() {
               <div className="grid grid-cols-2 gap-2">
                 {photos.map((photo, index) => (
                   <div key={`${photo.url}-${index}`} className="relative aspect-square overflow-hidden rounded-xl bg-neutral-100">
-                    <img src={photo.url} alt={`Foto produk ${index + 1}`} className="h-full w-full object-cover" />
+                    <img src={photo.url} alt={`Foto produk ${index + 1}`} loading="lazy" decoding="async" className="h-full w-full object-cover" />
                     <button type="button" onClick={() => removePhoto(index)} aria-label={`Hapus foto ${index + 1}`} className="absolute right-2 top-2 rounded-full bg-black/75 px-2.5 py-1 text-xs font-bold text-white">✕</button>
                     {index === 0 && <span className="absolute bottom-2 left-2 rounded-full bg-white/90 px-2 py-1 text-[10px] font-bold">Foto utama</span>}
                   </div>
@@ -469,7 +473,7 @@ export default function AdminCatalogPage() {
               <div className="grid grid-cols-2 gap-2">
                 {videos.map((video, index) => (
                   <div key={`${video.url}-${index}`} className="relative aspect-video overflow-hidden rounded-xl bg-neutral-900">
-                    <video src={video.url} muted playsInline className="h-full w-full object-cover" />
+                    <video src={video.url} muted playsInline preload="none" className="h-full w-full object-cover" />
                     <button type="button" onClick={() => setVideos((current) => { const item = current[index]; if (item?.file) URL.revokeObjectURL(item.url); return current.filter((_, i) => i !== index); })} aria-label={`Hapus video ${index + 1}`} className="absolute right-2 top-2 rounded-full bg-black/75 px-2.5 py-1 text-xs font-bold text-white">✕</button>
                     <span className="absolute bottom-2 left-2 rounded-full bg-black/70 px-2 py-1 text-[10px] font-bold text-white">▶ Video {index + 1}</span>
                   </div>
@@ -621,7 +625,7 @@ export default function AdminCatalogPage() {
                         {group.choices.map((choice, index) => (
                           <div key={`${group.id}-${index}`} className="grid gap-2 sm:grid-cols-[minmax(150px,1fr)_1fr_130px_120px_auto]">
                             <div className="flex min-w-0 items-center gap-2 rounded-lg border border-neutral-300 bg-white p-1.5">
-                              {choice.imageUrl ? <img src={choice.imageUrl} alt={`Gambar ${choice.label || "pilihan"}`} className="h-12 w-12 shrink-0 rounded-md object-cover" /> : <span className="grid h-12 w-12 shrink-0 place-items-center rounded-md bg-neutral-100 text-xl">🎨</span>}
+                              {choice.imageUrl ? <img src={choice.imageUrl} alt={`Gambar ${choice.label || "pilihan"}`} loading="lazy" decoding="async" className="h-12 w-12 shrink-0 rounded-md object-cover" /> : <span className="grid h-12 w-12 shrink-0 place-items-center rounded-md bg-neutral-100 text-xl">🎨</span>}
                               <label className="min-w-0 flex-1 cursor-pointer text-xs font-bold text-orange-700">{choice.imageUrl ? "Ganti gambar" : "Tambah gambar"}
                                 <input type="file" accept="image/*" className="hidden" onChange={(event) => { const file = event.target.files?.[0]; if (!file) return; const preview = URL.createObjectURL(file); updateOptionGroup(group.id, (item) => ({ ...item, choices: item.choices.map((value, i) => { if (i !== index) return value; if (value.imageFile && value.imageUrl) URL.revokeObjectURL(value.imageUrl); return { ...value, imageUrl: preview, imageFile: file }; }) })); event.target.value = ""; }} />
                               </label>

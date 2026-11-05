@@ -191,6 +191,8 @@ export default function Home() {
                             <img
                               src={product.image_url}
                               alt={product.title}
+                              loading="lazy"
+                              decoding="async"
                               className="h-full w-full object-cover transition duration-500 group-hover:scale-105"
                             />
                           ) : (

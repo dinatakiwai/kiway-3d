@@ -53,7 +53,7 @@ export default function CatalogPage() {
 
   useEffect(() => {
     loadProducts();
-    fetch("/api/catalog-categories", { cache: "no-store" }).then((response) => response.json())
+    fetch("/api/catalog-categories").then((response) => response.json())
       .then((result) => setCategories(Array.isArray(result.categories) ? result.categories : []))
       .catch(() => setCategories([]));
   }, []);
@@ -131,6 +131,8 @@ export default function CatalogPage() {
                         <img
                           src={product.image_url}
                           alt={product.title}
+                          loading="lazy"
+                          decoding="async"
                           className="h-full w-full object-cover transition duration-500 group-hover:scale-105"
                         />
                       ) : (
